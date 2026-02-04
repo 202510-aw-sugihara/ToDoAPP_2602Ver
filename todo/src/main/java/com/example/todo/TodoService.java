@@ -91,6 +91,14 @@ public class TodoService {
   }
 
   @Transactional
+  public int deleteByIds(List<Long> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return 0;
+    }
+    return todoMapper.deleteByIds(ids);
+  }
+
+  @Transactional
   public boolean toggleCompleted(long id) {
     Todo todo = todoRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("Todo not found: " + id));

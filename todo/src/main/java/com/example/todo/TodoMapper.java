@@ -16,4 +16,6 @@ public interface TodoMapper {
 
   long count(@Param("keyword") String keyword,
       @Param("categoryId") Long categoryId);
+
+  int deleteByIds(@Param("ids") List<Long> ids);
 }

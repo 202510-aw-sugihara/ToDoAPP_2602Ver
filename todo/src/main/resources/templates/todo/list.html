@@ -50,9 +50,13 @@
           </div>
 
           <div th:unless="${todos == null or #lists.isEmpty(todos)}" class="table-responsive">
-            <table class="table table-striped align-middle table-layout-fixed">
+            <form id="bulk-delete-form" th:action="@{/todos/bulk-delete}" method="post">
+              <table class="table table-striped align-middle table-layout-fixed">
               <thead>
                 <tr>
+                  <th style="width: 40px">
+                    <input type="checkbox" id="select-all" />
+                  </th>
                   <th class="text-nowrap" style="width: 180px">タイトル</th>
                   <th class="text-nowrap" style="width: 160px">
                     <a
@@ -80,6 +84,9 @@
                         : ''
                   } + (${todo.completed} ? ' table-secondary' : '')"
                 >
+                  <td>
+                    <input type="checkbox" name="ids" th:value="${todo.id}" class="row-check" />
+                  </td>
                   <td>
                     <a
                       data-title
@@ -144,7 +151,16 @@
                   <td colspan="5" class="text-center text-muted py-4">ToDoがありません</td>
                 </tr>
               </tbody>
-            </table>
+              </table>
+              <div class="d-flex gap-3 align-items-center">
+                <button class="btn btn-danger" type="submit" id="bulk-delete-btn" style="display: none;">
+                  選択した項目を削除
+                </button>
+                <span id="selected-count-wrap" class="text-muted small" style="display: none;">
+                  選択中: <span id="selected-count">0</span>件
+                </span>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -228,6 +244,59 @@
           }
         });
       });
+    </script>
+    <script>
+      (() => {
+        const selectAll = document.getElementById("select-all");
+        const checks = () => Array.from(document.querySelectorAll(".row-check"));
+        const bulkForm = document.getElementById("bulk-delete-form");
+        const selectedCount = document.getElementById("selected-count");
+        const selectedWrap = document.getElementById("selected-count-wrap");
+
+        const updateSelected = () => {
+          if (!selectedCount) return;
+          const count = checks().filter((c) => c.checked).length;
+          selectedCount.textContent = String(count);
+          const bulkBtn = document.getElementById("bulk-delete-btn");
+          if (bulkBtn) {
+            bulkBtn.style.display = count === 0 ? "none" : "inline-block";
+          }
+          if (selectedWrap) {
+            selectedWrap.style.display = count === 0 ? "none" : "inline-block";
+          }
+        };
+
+        if (selectAll) {
+          selectAll.addEventListener("change", () => {
+            checks().forEach((c) => (c.checked = selectAll.checked));
+            updateSelected();
+          });
+        }
+
+        checks().forEach((c) => {
+          c.addEventListener("change", () => {
+            if (!selectAll) return;
+            selectAll.checked = checks().every((x) => x.checked);
+            updateSelected();
+          });
+        });
+
+        if (bulkForm) {
+          bulkForm.addEventListener("submit", (e) => {
+            const selected = checks().filter((c) => c.checked).length;
+            if (selected === 0) {
+              e.preventDefault();
+              alert("削除対象が選択されていません。");
+              return;
+            }
+            if (!confirm("選択した項目を削除しますか？")) {
+              e.preventDefault();
+            }
+          });
+        }
+
+        updateSelected();
+      })();
     </script>
     <script>
       (() => {

@@ -2,10 +2,8 @@ package com.example.todo;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -33,12 +37,7 @@ public class TodoController {
 
   @ModelAttribute("categories")
   public List<Category> categories() {
-    try {
-      return categoryRepository.findAll();
-    } catch (RuntimeException ex) {
-      // DB障害などで画面全体が落ちるのを防ぐ（必要ならログ出力）
-      return Collections.emptyList();
-    }
+    return categoryRepository.findAll();
   }
 
   // ToDo一覧画面を表示します。
@@ -53,7 +52,6 @@ public class TodoController {
     Page<Todo> page = todoService.findPage(keyword, sort, direction, categoryId, pageable);
     model.addAttribute("todos", page.getContent());
     model.addAttribute("page", page);
-
     model.addAttribute("keyword", keyword == null ? "" : keyword);
     model.addAttribute("sort", sort == null ? "createdAt" : sort);
     model.addAttribute("direction", direction == null ? "desc" : direction);
@@ -63,7 +61,6 @@ public class TodoController {
     long total = page.getTotalElements();
     long start = total == 0 ? 0 : (page.getNumber() * (long) page.getSize()) + 1;
     long end = total == 0 ? 0 : Math.min(start + page.getSize() - 1, total);
-
     model.addAttribute("start", start);
     model.addAttribute("end", end);
     return "index";
@@ -72,7 +69,6 @@ public class TodoController {
   // ToDo新規作成画面を表示します。
   @GetMapping("/new")
   public String newTodo(@ModelAttribute("todoForm") TodoForm form) {
-    // FlashAttributeで渡ってきた値を潰さないため、ここでの余計な初期化はしない
     return "todo/new";
   }
 
@@ -158,7 +154,20 @@ public class TodoController {
     return "redirect:/todos";
   }
 
-  // 指定IDのToDoの完了状態を反転（Ajax/非Ajax両対応）
+  // 選択したToDoを一括削除し、一覧画面へリダイレクトします。
+  @PostMapping("/bulk-delete")
+  public String bulkDelete(@RequestParam(name = "ids", required = false) List<Long> ids,
+      RedirectAttributes redirectAttributes) {
+    int deleted = todoService.deleteByIds(ids);
+    if (deleted > 0) {
+      redirectAttributes.addFlashAttribute("successMessage", "選択したToDoを削除しました。");
+    } else {
+      redirectAttributes.addFlashAttribute("errorMessage", "削除対象が選択されていません。");
+    }
+    return "redirect:/todos";
+  }
+
+  // 指定IDのToDoの完了状態を反転します。
   @PostMapping("/{id}/toggle")
   public Object toggle(@PathVariable("id") long id,
       HttpServletRequest request,
