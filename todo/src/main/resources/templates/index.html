@@ -59,7 +59,7 @@
           </div>
 
           <div th:unless="${todos == null or #lists.isEmpty(todos)}" class="table-responsive">
-            <table class="table table-striped align-middle">
+            <table class="table table-striped align-middle table-layout-fixed">
               <thead>
                 <tr>
                   <th class="text-nowrap" style="width: 140px">
@@ -71,7 +71,7 @@
                       <span th:if="${sort == 'createdAt'}" th:text="${direction == 'asc' ? '▲' : '▼'}">▲</span>
                     </a>
                   </th>
-                  <th class="text-nowrap">
+                  <th class="text-nowrap" style="width: 180px">
                     <a
                       class="text-decoration-none"
                       th:href="@{/todos(sort='title', direction=${sort == 'title' and direction == 'asc' ? 'desc' : 'asc'}, keyword=${keyword})}"
@@ -99,9 +99,12 @@
                   <td th:text="${todo.createdAt != null ? #temporals.format(todo.createdAt, 'yyyy/MM/dd') : '-'}">2026/02/04</td>
                   <td>
                     <a
+                      class="d-inline-block text-truncate align-middle"
+                      style="max-width: 160px;"
                       th:href="@{/todos/{id}(id=${todo.id})}"
                       th:classappend="${todo.completed} ? 'text-decoration-line-through text-muted' : ''"
-                      th:text="${todo.title}"
+                      th:text="${#strings.length(todo.title) > 10 ? #strings.substring(todo.title, 0, 10) + '....' : todo.title}"
+                      th:title="${todo.title}"
                     >
                       サンプルToDo
                     </a>
@@ -130,8 +133,17 @@
                   </td>
                   <td>
                     <a class="btn btn-sm btn-outline-secondary" th:href="@{/todos/{id}/edit(id=${todo.id})}">編集</a>
-                    <form class="d-inline" th:action="@{/todos/{id}/delete(id=${todo.id})}" method="post" onsubmit="return confirm('本当に削除しますか？')">
-                      <button class="btn btn-sm btn-outline-danger" type="submit">削除</button>
+                    <form class="d-inline" th:action="@{/todos/{id}(id=${todo.id})}" method="post">
+                      <input type="hidden" name="_method" value="DELETE" />
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        type="submit"
+                        data-delete-trigger
+                        th:attr="data-title=${todo.title}"
+                        onclick="return confirm('本当に削除しますか？')"
+                      >
+                        削除
+                      </button>
                     </form>
                   </td>
                 </tr>
@@ -154,6 +166,80 @@
           alert.classList.remove("show");
         });
       }, 3000);
+    </script>
+    <div id="delete-modal" class="modal-backdrop" style="display: none;">
+      <div class="modal-dialog-centered">
+        <div class="modal-content p-3">
+          <h5 class="mb-2">削除確認</h5>
+          <p class="mb-3">
+            「<span id="delete-title">タイトル</span>」を削除しますか？
+          </p>
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-outline-secondary" id="delete-cancel">キャンセル</button>
+            <button type="button" class="btn btn-danger" id="delete-confirm">削除する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <style>
+      .table-layout-fixed {
+        table-layout: fixed;
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+      }
+      .modal-dialog-centered {
+        max-width: 420px;
+        width: calc(100% - 2rem);
+      }
+      .modal-content {
+        background: #fff;
+        color: #212529;
+        border-radius: 12px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+      }
+    </style>
+    <script>
+      (() => {
+        const modal = document.getElementById("delete-modal");
+        const titleEl = document.getElementById("delete-title");
+        const btnCancel = document.getElementById("delete-cancel");
+        const btnConfirm = document.getElementById("delete-confirm");
+        let targetForm = null;
+
+        document.querySelectorAll("[data-delete-trigger]").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            targetForm = btn.closest("form");
+            titleEl.textContent = btn.getAttribute("data-title") || "このToDo";
+            modal.style.display = "flex";
+          });
+        });
+
+        btnCancel.addEventListener("click", () => {
+          modal.style.display = "none";
+          targetForm = null;
+        });
+
+        btnConfirm.addEventListener("click", () => {
+          if (targetForm) {
+            targetForm.requestSubmit();
+          }
+        });
+
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.style.display = "none";
+            targetForm = null;
+          }
+        });
+      })();
     </script>
   </body>
 </html>
