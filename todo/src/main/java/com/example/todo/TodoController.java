@@ -64,4 +64,16 @@ public class TodoController {
     model.addAttribute("todo", todo);
     return "todo/detail";
   }
+
+  // 指定IDのToDoを削除し、一覧画面へリダイレクトします。
+  @PostMapping("/todos/{id}/delete")
+  public String delete(@PathVariable("id") long id, RedirectAttributes redirectAttributes) {
+    try {
+      todoService.deleteById(id);
+      redirectAttributes.addFlashAttribute("successMessage", "ToDoを削除しました。");
+    } catch (IllegalArgumentException ex) {
+      redirectAttributes.addFlashAttribute("errorMessage", "削除に失敗しました。");
+    }
+    return "redirect:/todos";
+  }
 }

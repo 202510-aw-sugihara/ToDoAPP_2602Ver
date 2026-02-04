@@ -28,6 +28,14 @@ public class TodoService {
     return todoRepository.save(todo);
   }
 
+  @Transactional
+  public void deleteById(long id) {
+    if (!todoRepository.existsById(id)) {
+      throw new IllegalArgumentException("Todo not found: " + id);
+    }
+    todoRepository.deleteById(id);
+  }
+
   private Todo toEntity(TodoForm form) {
     Integer priority = form.getPriority() != null ? form.getPriority() : 1;
     return Todo.builder()

@@ -20,8 +20,23 @@
     </header>
 
     <main class="container my-4">
-      <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}">
-        登録が完了しました。
+      <div
+        th:if="${successMessage}"
+        class="alert alert-success alert-dismissible fade show"
+        role="alert"
+        data-auto-dismiss="true"
+        th:text="${successMessage}"
+      >
+        成功しました。
+      </div>
+      <div
+        th:if="${errorMessage}"
+        class="alert alert-danger alert-dismissible fade show"
+        role="alert"
+        data-auto-dismiss="true"
+        th:text="${errorMessage}"
+      >
+        失敗しました。
       </div>
       <div class="card shadow-sm">
         <div class="card-body">
@@ -65,7 +80,9 @@
                   <td>
                     <a class="btn btn-sm btn-outline-primary" th:href="@{/todos/{id}(id=${todo.id})}">詳細</a>
                     <a class="btn btn-sm btn-outline-secondary" th:href="@{/todos/{id}/edit(id=${todo.id})}">編集</a>
-                    <a class="btn btn-sm btn-outline-danger" th:href="@{/todos/{id}/delete(id=${todo.id})}">削除</a>
+                    <form class="d-inline" th:action="@{/todos/{id}/delete(id=${todo.id})}" method="post" onsubmit="return confirm('本当に削除しますか？')">
+                      <button class="btn btn-sm btn-outline-danger" type="submit">削除</button>
+                    </form>
                   </td>
                 </tr>
                 <tr th:if="${todos == null or #lists.isEmpty(todos)}">
@@ -83,5 +100,13 @@
         © 2026 ToDo App
       </div>
     </footer>
+
+    <script>
+      setTimeout(() => {
+        document.querySelectorAll("[data-auto-dismiss='true']").forEach((alert) => {
+          alert.classList.remove("show");
+        });
+      }, 3000);
+    </script>
   </body>
 </html>
