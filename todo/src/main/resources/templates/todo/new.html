@@ -21,8 +21,28 @@
     <main class="container my-4">
       <div class="card shadow-sm">
         <div class="card-body">
-          <p class="text-muted mb-4">ここに新規作成フォームを配置します。</p>
-          <a class="btn btn-outline-secondary" th:href="@{/todos}">戻る</a>
+          <form th:action="@{/todos/confirm}" th:object="${todoForm}" method="post" class="vstack gap-3">
+            <div>
+              <label class="form-label">タイトル</label>
+              <input class="form-control" type="text" th:field="*{title}" />
+            </div>
+            <div>
+              <label class="form-label">説明</label>
+              <textarea class="form-control" rows="4" th:field="*{description}"></textarea>
+            </div>
+            <div>
+              <label class="form-label">期限日</label>
+              <input class="form-control" type="date" th:field="*{dueDate}" />
+            </div>
+            <div>
+              <label class="form-label">優先度</label>
+              <input class="form-control" type="number" min="1" max="5" th:field="*{priority}" />
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary" type="submit">確認</button>
+              <a class="btn btn-outline-secondary" th:href="@{/todos}">戻る</a>
+            </div>
+          </form>
         </div>
       </div>
     </main>

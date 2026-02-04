@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ToDo完了</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body class="bg-light">
+    <header class="border-bottom bg-white">
+      <div class="container py-3">
+        <h1 class="h4 mb-0">登録完了</h1>
+      </div>
+    </header>
+
+    <main class="container my-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <p class="mb-3">
+            <span th:if="${title != null}">
+              「<strong th:text="${title}">タイトル</strong>」を登録しました。
+            </span>
+            <span th:if="${title == null}">登録が完了しました。</span>
+          </p>
+          <a class="btn btn-outline-secondary" th:href="@{/todos}">一覧に戻る</a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
