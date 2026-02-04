@@ -1,13 +1,21 @@
 package com.example.todo;
 
 import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.validation.annotation.Validated;
 
 @Controller
 public class TodoController {
@@ -65,6 +73,37 @@ public class TodoController {
     return "todo/detail";
   }
 
+  // 指定IDのToDo編集画面を表示します。
+  @GetMapping("/todos/{id}/edit")
+  public String edit(@PathVariable("id") long id, Model model) {
+    Todo todo = todoService.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    model.addAttribute("todoForm", todoService.toForm(todo));
+    return "todo/edit";
+  }
+
+  // 指定IDのToDoを更新し、一覧画面へリダイレクトします。
+  @PostMapping("/todos/{id}/update")
+  public String update(@PathVariable("id") long id,
+      @Validated @ModelAttribute("todoForm") TodoForm form,
+      BindingResult bindingResult,
+      Model model,
+      RedirectAttributes redirectAttributes) {
+    if (bindingResult.hasErrors()) {
+      return "todo/edit";
+    }
+    try {
+      todoService.update(id, form);
+    } catch (OptimisticLockingFailureException ex) {
+      model.addAttribute("errorMessage", "他のユーザーが更新しています。再読み込みしてやり直してください。");
+      return "todo/edit";
+    } catch (IllegalArgumentException ex) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+    redirectAttributes.addFlashAttribute("successMessage", "更新が完了しました。");
+    return "redirect:/todos";
+  }
+
   // 指定IDのToDoを削除し、一覧画面へリダイレクトします。
   @PostMapping("/todos/{id}/delete")
   public String delete(@PathVariable("id") long id, RedirectAttributes redirectAttributes) {
@@ -75,5 +114,27 @@ public class TodoController {
       redirectAttributes.addFlashAttribute("errorMessage", "削除に失敗しました。");
     }
     return "redirect:/todos";
+  }
+
+  // 指定IDのToDoの完了状態を反転します。
+  @PostMapping("/todos/{id}/toggle")
+  public Object toggle(@PathVariable("id") long id, HttpServletRequest request,
+      RedirectAttributes redirectAttributes) {
+    try {
+      boolean completed = todoService.toggleCompleted(id);
+      boolean ajax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+      if (ajax) {
+        return ResponseEntity.ok().body(java.util.Map.of("completed", completed));
+      }
+      redirectAttributes.addFlashAttribute("successMessage", "完了状態を更新しました。");
+      return "redirect:/todos";
+    } catch (IllegalArgumentException ex) {
+      boolean ajax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+      if (ajax) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(java.util.Map.of("error", "not_found"));
+      }
+      redirectAttributes.addFlashAttribute("errorMessage", "対象のToDoが見つかりませんでした。");
+      return "redirect:/todos";
+    }
   }
 }

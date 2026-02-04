@@ -62,7 +62,13 @@
               </thead>
               <tbody>
                 <tr th:each="todo : ${todos}">
-                  <td th:text="${todo.title}">サンプルToDo</td>
+                  <td>
+                    <span data-title
+                          th:classappend="${todo.completed} ? 'text-decoration-line-through text-muted' : ''"
+                          th:text="${todo.title}">
+                      サンプルToDo
+                    </span>
+                  </td>
                   <td
                     th:text="${todo.dueDate != null ? #temporals.format(todo.dueDate, 'yyyy/MM/dd') : '-'}"
                     th:classappend="${todo.dueDate != null and todo.dueDate.isBefore(T(java.time.LocalDate).now())} ? 'text-danger' : ''"
@@ -74,8 +80,14 @@
                     <span th:if="${todo.priority == null}">-</span>
                   </td>
                   <td>
-                    <span th:if="${todo.completed}" class="text-success" aria-label="完了">✓</span>
-                    <span th:if="${!todo.completed}" class="text-muted">-</span>
+                    <form class="d-inline" data-ajax="toggle" th:action="@{/todos/{id}/toggle(id=${todo.id})}" method="post">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        th:checked="${todo.completed}"
+                        onchange="this.form.submit()"
+                      />
+                    </form>
                   </td>
                   <td>
                     <a class="btn btn-sm btn-outline-primary" th:href="@{/todos/{id}(id=${todo.id})}">詳細</a>
@@ -107,6 +119,32 @@
           alert.classList.remove("show");
         });
       }, 3000);
+    </script>
+    <script>
+      document.querySelectorAll("form[data-ajax='toggle']").forEach((form) => {
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const checkbox = form.querySelector("input[type='checkbox']");
+          const row = form.closest("tr");
+          const title = row.querySelector("[data-title]");
+          try {
+            const response = await fetch(form.action, {
+              method: "POST",
+              headers: { "X-Requested-With": "XMLHttpRequest" },
+            });
+            if (!response.ok) throw new Error("toggle failed");
+            const data = await response.json();
+            if (title) {
+              title.classList.toggle("text-decoration-line-through", data.completed);
+              title.classList.toggle("text-muted", data.completed);
+            }
+            checkbox.checked = data.completed;
+          } catch (e) {
+            checkbox.checked = !checkbox.checked;
+            alert("更新に失敗しました。");
+          }
+        });
+      });
     </script>
   </body>
 </html>
