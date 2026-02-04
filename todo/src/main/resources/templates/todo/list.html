@@ -20,6 +20,9 @@
     </header>
 
     <main class="container my-4">
+      <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}">
+        登録が完了しました。
+      </div>
       <div class="card shadow-sm">
         <div class="card-body">
           <h2 class="h5 mb-3">一覧</h2>
@@ -37,7 +40,7 @@
                 <tr th:each="todo : ${todos}">
                   <td th:text="${todo.id}">1</td>
                   <td th:text="${todo.title}">サンプルToDo</td>
-                  <td th:text="${todo.dueAt}">2026-02-04</td>
+                  <td th:text="${todo.dueDate}">2026-02-04</td>
                   <td>
                     <a class="btn btn-sm btn-outline-primary" th:href="@{/todos/{id}(id=${todo.id})}">詳細</a>
                     <a class="btn btn-sm btn-outline-secondary" th:href="@{/todos/{id}/edit(id=${todo.id})}">編集</a>

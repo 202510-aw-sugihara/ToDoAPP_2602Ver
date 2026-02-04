@@ -21,7 +21,18 @@
     <main class="container my-4">
       <div class="card shadow-sm">
         <div class="card-body">
-          <p class="text-muted">ここにToDo詳細を表示します。</p>
+          <dl class="row mb-4">
+            <dt class="col-sm-3">タイトル</dt>
+            <dd class="col-sm-9" th:text="${todo.title}">タイトル</dd>
+            <dt class="col-sm-3">説明</dt>
+            <dd class="col-sm-9" th:text="${todo.description}">説明</dd>
+            <dt class="col-sm-3">期限日</dt>
+            <dd class="col-sm-9" th:text="${todo.dueDate}">2026-02-04</dd>
+            <dt class="col-sm-3">優先度</dt>
+            <dd class="col-sm-9" th:text="${todo.priority}">1</dd>
+            <dt class="col-sm-3">完了</dt>
+            <dd class="col-sm-9" th:text="${todo.completed}">false</dd>
+          </dl>
           <div class="d-flex gap-2">
             <a class="btn btn-outline-secondary" th:href="@{/todos}">一覧に戻る</a>
             <a class="btn btn-primary" th:href="@{/todos/{id}/edit(id=${todo.id})}">編集</a>
