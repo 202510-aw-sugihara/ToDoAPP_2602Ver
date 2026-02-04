@@ -17,6 +17,39 @@
         <h1 class="h4 mb-0">ToDoアプリ</h1>
         <a class="btn btn-primary" th:href="@{/todos/new}">新規作成</a>
       </div>
+      <div class="container pb-3 d-flex justify-content-end">
+        <form class="row g-2 align-items-center" method="get" th:action="@{/todos}">
+          <div class="col-auto">
+            <input
+              class="form-control"
+              type="text"
+              name="keyword"
+              placeholder="タイトルで検索"
+              th:value="${keyword}"
+            />
+          </div>
+          <div class="col-auto">
+            <select class="form-select" name="categoryId">
+              <option value="">カテゴリ</option>
+              <option th:each="c : ${categories}"
+                      th:value="${c.id}"
+                      th:selected="${categoryId == c.id}"
+                      th:text="${c.name}">
+                カテゴリ
+              </option>
+            </select>
+          </div>
+          <input type="hidden" name="sort" th:value="${sort}" />
+          <input type="hidden" name="direction" th:value="${direction}" />
+          <div class="col-auto">
+            <button class="btn btn-outline-primary" type="submit">検索</button>
+          </div>
+          <div class="col-auto"
+               th:if="${(keyword != null and !#strings.isEmpty(keyword)) or (categoryId != null)}">
+            <a class="btn btn-outline-secondary" th:href="@{/todos}">クリア</a>
+          </div>
+        </form>
+      </div>
     </header>
 
     <main class="container my-4">
@@ -31,42 +64,11 @@
         <div class="card-body">
           <h2 class="h5 mb-3">一覧</h2>
 
-          <form class="row g-2 align-items-center mb-3" method="get" th:action="@{/todos}">
-            <div class="col-sm-6 col-md-4">
-              <input
-                class="form-control"
-                type="text"
-                name="keyword"
-                placeholder="タイトルで検索"
-                th:value="${keyword}"
-              />
-            </div>
-            <div class="col-sm-4 col-md-3">
-              <select class="form-select" name="categoryId">
-                <option value="">カテゴリ</option>
-                <option th:each="c : ${categories}"
-                        th:value="${c.id}"
-                        th:selected="${categoryId == c.id}"
-                        th:text="${c.name}">
-                  カテゴリ
-                </option>
-              </select>
-            </div>
-            <input type="hidden" name="sort" th:value="${sort}" />
-            <input type="hidden" name="direction" th:value="${direction}" />
-            <div class="col-auto">
-              <button class="btn btn-outline-primary" type="submit">検索</button>
-            </div>
-            <div class="col-auto"
-                 th:if="${(keyword != null and !#strings.isEmpty(keyword)) or (categoryId != null)}">
-              <a class="btn btn-outline-secondary" th:href="@{/todos}">クリア</a>
-            </div>
-            <div class="col-12">
-              <small class="text-muted" th:text="'全' + ${resultCount} + '件中 ' + ${start} + '-' + ${end} + '件を表示'">
-                全0件中 0-0件を表示
-              </small>
-            </div>
-          </form>
+          <div class="mb-3">
+            <small class="text-muted" th:text="'全' + ${resultCount} + '件中 ' + ${start} + '-' + ${end} + '件を表示'">
+              全0件中 0-0件を表示
+            </small>
+          </div>
 
           <div th:if="${todos == null or #lists.isEmpty(todos)}" class="text-center py-5">
             <p class="mb-1 fw-semibold">ToDoがまだ登録されていません</p>
@@ -75,7 +77,6 @@
           </div>
 
           <div th:unless="${todos == null or #lists.isEmpty(todos)}" class="table-responsive">
-            <form id="bulk-delete-form" th:action="@{/todos/bulk-delete}" method="post">
               <table class="table table-striped align-middle table-layout-fixed">
               <thead>
                 <tr>
@@ -135,7 +136,7 @@
                   } + (${todo.completed} ? ' table-secondary' : '')"
                 >
                   <td>
-                    <input type="checkbox" name="ids" th:value="${todo.id}" class="row-check" />
+                    <input type="checkbox" name="ids" th:value="${todo.id}" class="row-check" form="bulk-delete-form" />
                   </td>
                   <td th:text="${todo.createdAt != null ? #temporals.format(todo.createdAt, 'yyyy/MM/dd') : '-'}">2026/02/04</td>
                   <td>
@@ -201,16 +202,15 @@
                 </tr>
               </tbody>
               </table>
-              <div class="d-flex gap-3 align-items-center">
-                <button class="btn btn-danger" type="submit" id="bulk-delete-btn" style="display: none;">
-                  選択した項目を削除
-                </button>
-                <span id="selected-count-wrap" class="text-muted small" style="display: none;">
-                  選択中: <span id="selected-count">0</span>件
-                </span>
-              </div>
-            </form>
           </div>
+          <form id="bulk-delete-form" th:action="@{/todos/bulk-delete}" method="post" class="d-flex gap-3 align-items-center mt-2">
+            <button class="btn btn-danger" type="submit" id="bulk-delete-btn" style="display: none;">
+              選択した項目を削除
+            </button>
+            <span id="selected-count-wrap" class="text-muted small" style="display: none;">
+              選択中: <span id="selected-count">0</span>件
+            </span>
+          </form>
 
           <nav th:if="${page != null and page.totalPages > 1}" class="mt-3">
             <ul class="pagination">

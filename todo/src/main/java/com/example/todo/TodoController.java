@@ -69,6 +69,9 @@ public class TodoController {
   // ToDo新規作成画面を表示します。
   @GetMapping("/new")
   public String newTodo(@ModelAttribute("todoForm") TodoForm form) {
+    if (form.getDueDate() == null) {
+      form.setDueDate(java.time.LocalDate.now().plusWeeks(1));
+    }
     return "todo/new";
   }
 
@@ -97,7 +100,7 @@ public class TodoController {
   }
 
   // 指定IDのToDo詳細画面を表示します。
-  @GetMapping("/{id}")
+  @GetMapping("/{id:\\d+}")
   public String detail(@PathVariable("id") long id, Model model, RedirectAttributes redirectAttributes) {
     Todo todo = todoService.findById(id).orElse(null);
     if (todo == null) {
@@ -109,7 +112,7 @@ public class TodoController {
   }
 
   // 指定IDのToDo編集画面を表示します。
-  @GetMapping("/{id}/edit")
+  @GetMapping("/{id:\\d+}/edit")
   public String edit(@PathVariable("id") long id, Model model) {
     Todo todo = todoService.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -118,7 +121,7 @@ public class TodoController {
   }
 
   // 指定IDのToDoを更新し、一覧画面へリダイレクトします。
-  @PostMapping("/{id}/update")
+  @PostMapping("/{id:\\d+}/update")
   public String update(@PathVariable("id") long id,
       @Valid @ModelAttribute("todoForm") TodoForm form,
       BindingResult bindingResult,
@@ -143,7 +146,7 @@ public class TodoController {
   }
 
   // 指定IDのToDoを削除し、一覧画面へリダイレクトします。
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/{id:\\d+}")
   public String delete(@PathVariable("id") long id, RedirectAttributes redirectAttributes) {
     try {
       todoService.deleteById(id);
@@ -168,7 +171,7 @@ public class TodoController {
   }
 
   // 指定IDのToDoの完了状態を反転します。
-  @PostMapping("/{id}/toggle")
+  @PostMapping("/{id:\\d+}/toggle")
   public Object toggle(@PathVariable("id") long id,
       HttpServletRequest request,
       RedirectAttributes redirectAttributes) {

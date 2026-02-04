@@ -50,7 +50,6 @@
           </div>
 
           <div th:unless="${todos == null or #lists.isEmpty(todos)}" class="table-responsive">
-            <form id="bulk-delete-form" th:action="@{/todos/bulk-delete}" method="post">
               <table class="table table-striped align-middle table-layout-fixed">
               <thead>
                 <tr>
@@ -85,7 +84,7 @@
                   } + (${todo.completed} ? ' table-secondary' : '')"
                 >
                   <td>
-                    <input type="checkbox" name="ids" th:value="${todo.id}" class="row-check" />
+                    <input type="checkbox" name="ids" th:value="${todo.id}" class="row-check" form="bulk-delete-form" />
                   </td>
                   <td>
                     <a
@@ -152,16 +151,15 @@
                 </tr>
               </tbody>
               </table>
-              <div class="d-flex gap-3 align-items-center">
-                <button class="btn btn-danger" type="submit" id="bulk-delete-btn" style="display: none;">
-                  選択した項目を削除
-                </button>
-                <span id="selected-count-wrap" class="text-muted small" style="display: none;">
-                  選択中: <span id="selected-count">0</span>件
-                </span>
-              </div>
-            </form>
           </div>
+          <form id="bulk-delete-form" th:action="@{/todos/bulk-delete}" method="post" class="d-flex gap-3 align-items-center mt-2">
+            <button class="btn btn-danger" type="submit" id="bulk-delete-btn" style="display: none;">
+              選択した項目を削除
+            </button>
+            <span id="selected-count-wrap" class="text-muted small" style="display: none;">
+              選択中: <span id="selected-count">0</span>件
+            </span>
+          </form>
         </div>
       </div>
     </main>
