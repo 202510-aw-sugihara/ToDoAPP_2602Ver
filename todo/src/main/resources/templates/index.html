@@ -96,8 +96,17 @@
                       <span th:if="${sort == 'title'}" th:text="${direction == 'asc' ? '▲' : '▼'}">▲</span>
                     </a>
                   </th>
-                  <th class="text-nowrap" style="width: 160px">期限日</th>
+                  <th class="text-nowrap" style="width: 160px">
+                    <a
+                      class="text-decoration-none"
+                      th:href="@{/todos(sort='dueDate', direction=${sort == 'dueDate' and direction == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, categoryId=${categoryId})}"
+                    >
+                      期限日
+                      <span th:if="${sort == 'dueDate'}" th:text="${direction == 'asc' ? '▲' : '▼'}">▲</span>
+                    </a>
+                  </th>
                   <th class="text-nowrap" style="width: 120px">優先度</th>
+                  <th class="text-nowrap" style="width: 120px">カテゴリ</th>
                   <th class="text-nowrap" style="width: 120px">
                     <a
                       class="text-decoration-none"
@@ -111,7 +120,16 @@
                 </tr>
               </thead>
               <tbody>
-                <tr th:each="todo : ${todos}" th:classappend="${todo.completed} ? 'table-secondary' : ''">
+                <tr
+                  th:each="todo : ${todos}"
+                  th:classappend="${
+                    todo.dueDate != null and todo.dueDate.isBefore(T(java.time.LocalDate).now())
+                      ? 'table-danger'
+                      : (todo.dueDate != null and !todo.dueDate.isAfter(T(java.time.LocalDate).now().plusDays(3)))
+                        ? 'table-warning'
+                        : ''
+                  } + (${todo.completed} ? ' table-secondary' : '')"
+                >
                   <td th:text="${todo.createdAt != null ? #temporals.format(todo.createdAt, 'yyyy/MM/dd') : '-'}">2026/02/04</td>
                   <td>
                     <a
@@ -141,6 +159,10 @@
                       中
                     </span>
                     <span th:if="${todo.priority == null}">-</span>
+                  </td>
+                  <td>
+                    <span th:if="${todo.category != null}" th:text="${todo.category.name}">カテゴリ</span>
+                    <span th:if="${todo.category == null}">-</span>
                   </td>
                   <td>
                     <form

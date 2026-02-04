@@ -27,6 +27,7 @@
     <choose>
       <when test="sort == 'createdAt'">ORDER BY created_at</when>
       <when test="sort == 'title'">ORDER BY title</when>
+      <when test="sort == 'dueDate'">ORDER BY due_date</when>
       <when test="sort == 'completed'">ORDER BY completed</when>
       <otherwise>ORDER BY created_at</otherwise>
     </choose>

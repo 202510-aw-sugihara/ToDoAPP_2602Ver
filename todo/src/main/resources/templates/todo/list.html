@@ -54,14 +54,32 @@
               <thead>
                 <tr>
                   <th class="text-nowrap" style="width: 180px">タイトル</th>
-                  <th class="text-nowrap" style="width: 160px">期限日</th>
+                  <th class="text-nowrap" style="width: 160px">
+                    <a
+                      class="text-decoration-none"
+                      th:href="@{/todos(sort='dueDate', direction=${sort == 'dueDate' and direction == 'asc' ? 'desc' : 'asc'}, keyword=${keyword})}"
+                    >
+                      期限日
+                      <span th:if="${sort == 'dueDate'}" th:text="${direction == 'asc' ? '▲' : '▼'}">▲</span>
+                    </a>
+                  </th>
                   <th class="text-nowrap" style="width: 120px">優先度</th>
+                  <th class="text-nowrap" style="width: 120px">カテゴリ</th>
                   <th class="text-nowrap" style="width: 120px">完了</th>
                   <th class="text-nowrap" style="width: 220px">操作</th>
                 </tr>
               </thead>
               <tbody>
-                <tr th:each="todo : ${todos}">
+                <tr
+                  th:each="todo : ${todos}"
+                  th:classappend="${
+                    todo.dueDate != null and todo.dueDate.isBefore(T(java.time.LocalDate).now())
+                      ? 'table-danger'
+                      : (todo.dueDate != null and !todo.dueDate.isAfter(T(java.time.LocalDate).now().plusDays(3)))
+                        ? 'table-warning'
+                        : ''
+                  } + (${todo.completed} ? ' table-secondary' : '')"
+                >
                   <td>
                     <a
                       data-title
@@ -91,6 +109,10 @@
                       中
                     </span>
                     <span th:if="${todo.priority == null}">-</span>
+                  </td>
+                  <td>
+                    <span th:if="${todo.category != null}" th:text="${todo.category.name}">カテゴリ</span>
+                    <span th:if="${todo.category == null}">-</span>
                   </td>
                   <td>
                     <form class="d-inline" data-ajax="toggle" th:action="@{/todos/{id}/toggle(id=${todo.id})}" method="post">
