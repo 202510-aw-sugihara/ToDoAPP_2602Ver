@@ -1,7 +1,9 @@
 package com.example.todo;
 
-import java.util.List;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -11,11 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.validation.annotation.Validated;
 
 @Controller
 public class TodoController {
@@ -42,7 +41,10 @@ public class TodoController {
 
   // フォーム送信を受け取り、確認画面に遷移します。
   @PostMapping("/todos/confirm")
-  public String confirm(@ModelAttribute("todoForm") TodoForm form) {
+  public String confirm(@Valid @ModelAttribute("todoForm") TodoForm form, BindingResult bindingResult) {
+    if (bindingResult.hasErrors()) {
+      return "todo/new";
+    }
     return "todo/confirm";
   }
 
@@ -85,7 +87,7 @@ public class TodoController {
   // 指定IDのToDoを更新し、一覧画面へリダイレクトします。
   @PostMapping("/todos/{id}/update")
   public String update(@PathVariable("id") long id,
-      @Validated @ModelAttribute("todoForm") TodoForm form,
+      @Valid @ModelAttribute("todoForm") TodoForm form,
       BindingResult bindingResult,
       Model model,
       RedirectAttributes redirectAttributes) {

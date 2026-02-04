@@ -22,10 +22,12 @@
       <div class="card shadow-sm">
         <div class="card-body">
           <dl class="row mb-4">
+            <dt class="col-sm-3">作成者</dt>
+            <dd class="col-sm-9" th:text="${todoForm.author}">作成者</dd>
             <dt class="col-sm-3">タイトル</dt>
-            <dd class="col-sm-9" th:text="${todoForm.title}">サンプル</dd>
-            <dt class="col-sm-3">説明</dt>
-            <dd class="col-sm-9" th:text="${todoForm.description}">説明文</dd>
+            <dd class="col-sm-9" th:text="${todoForm.title}">タイトル</dd>
+            <dt class="col-sm-3">詳細</dt>
+            <dd class="col-sm-9" th:text="${todoForm.detail}">詳細</dd>
             <dt class="col-sm-3">期限日</dt>
             <dd class="col-sm-9" th:text="${todoForm.dueDate}">2026-02-04</dd>
             <dt class="col-sm-3">優先度</dt>
@@ -33,15 +35,17 @@
           </dl>
           <div class="d-flex gap-2">
             <form th:action="@{/todos/back}" th:object="${todoForm}" method="post">
+              <input type="hidden" th:field="*{author}" />
               <input type="hidden" th:field="*{title}" />
-              <input type="hidden" th:field="*{description}" />
+              <input type="hidden" th:field="*{detail}" />
               <input type="hidden" th:field="*{dueDate}" />
               <input type="hidden" th:field="*{priority}" />
               <button class="btn btn-outline-secondary" type="submit">入力に戻る</button>
             </form>
             <form th:action="@{/todos/complete}" th:object="${todoForm}" method="post">
+              <input type="hidden" th:field="*{author}" />
               <input type="hidden" th:field="*{title}" />
-              <input type="hidden" th:field="*{description}" />
+              <input type="hidden" th:field="*{detail}" />
               <input type="hidden" th:field="*{dueDate}" />
               <input type="hidden" th:field="*{priority}" />
               <button class="btn btn-primary" type="submit">登録</button>

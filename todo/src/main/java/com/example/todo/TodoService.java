@@ -25,6 +25,7 @@ public class TodoService {
   public TodoForm toForm(Todo todo) {
     return new TodoForm(
         todo.getId(),
+        todo.getAuthor(),
         todo.getTitle(),
         todo.getDescription(),
         todo.getDueDate(),
@@ -43,8 +44,9 @@ public class TodoService {
   public Todo update(long id, TodoForm form) {
     Todo todo = todoRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("Todo not found: " + id));
+    todo.setAuthor(form.getAuthor());
     todo.setTitle(form.getTitle());
-    todo.setDescription(form.getDescription());
+    todo.setDescription(form.getDetail());
     todo.setDueDate(form.getDueDate());
     todo.setPriority(form.getPriority());
     todo.setVersion(form.getVersion());
@@ -72,8 +74,9 @@ public class TodoService {
   private Todo toEntity(TodoForm form) {
     Integer priority = form.getPriority() != null ? form.getPriority() : 1;
     return Todo.builder()
+        .author(form.getAuthor())
         .title(form.getTitle())
-        .description(form.getDescription())
+        .description(form.getDetail())
         .dueDate(form.getDueDate())
         .priority(priority)
         .completed(false)
