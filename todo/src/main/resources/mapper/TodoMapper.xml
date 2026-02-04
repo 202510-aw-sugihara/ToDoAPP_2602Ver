@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.todo.TodoMapper">
+  <select id="search" parameterType="map" resultType="com.example.todo.Todo">
+    SELECT
+      id,
+      author,
+      title,
+      description,
+      due_date,
+      priority,
+      completed,
+      created_at,
+      updated_at,
+      version
+    FROM todos
+    <where>
+      <if test="keyword != null and keyword != ''">
+        AND title LIKE CONCAT('%', #{keyword}, '%')
+      </if>
+    </where>
+    <choose>
+      <when test="sort == 'createdAt'">ORDER BY created_at</when>
+      <when test="sort == 'title'">ORDER BY title</when>
+      <when test="sort == 'completed'">ORDER BY completed</when>
+      <otherwise>ORDER BY created_at</otherwise>
+    </choose>
+    <choose>
+      <when test="direction == 'asc'">ASC</when>
+      <otherwise>DESC</otherwise>
+    </choose>
+  </select>
+</mapper>

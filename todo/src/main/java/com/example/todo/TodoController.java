@@ -28,10 +28,15 @@ public class TodoController {
 
   // ToDo一覧画面を表示します。
   @GetMapping("/todos")
-  public String list(@RequestParam(required = false) String keyword, Model model) {
-    List<Todo> todos = todoService.findAll(keyword);
+  public String list(@RequestParam(required = false) String keyword,
+      @RequestParam(required = false) String sort,
+      @RequestParam(required = false) String direction,
+      Model model) {
+    List<Todo> todos = todoService.findAll(keyword, sort, direction);
     model.addAttribute("todos", todos);
     model.addAttribute("keyword", keyword == null ? "" : keyword);
+    model.addAttribute("sort", sort == null ? "createdAt" : sort);
+    model.addAttribute("direction", direction == null ? "desc" : direction);
     model.addAttribute("resultCount", todos.size());
     return "index";
   }

@@ -62,15 +62,41 @@
             <table class="table table-striped align-middle">
               <thead>
                 <tr>
-                  <th class="text-nowrap">タイトル</th>
+                  <th class="text-nowrap" style="width: 140px">
+                    <a
+                      class="text-decoration-none"
+                      th:href="@{/todos(sort='createdAt', direction=${sort == 'createdAt' and direction == 'asc' ? 'desc' : 'asc'}, keyword=${keyword})}"
+                    >
+                      作成日
+                      <span th:if="${sort == 'createdAt'}" th:text="${direction == 'asc' ? '▲' : '▼'}">▲</span>
+                    </a>
+                  </th>
+                  <th class="text-nowrap">
+                    <a
+                      class="text-decoration-none"
+                      th:href="@{/todos(sort='title', direction=${sort == 'title' and direction == 'asc' ? 'desc' : 'asc'}, keyword=${keyword})}"
+                    >
+                      タイトル
+                      <span th:if="${sort == 'title'}" th:text="${direction == 'asc' ? '▲' : '▼'}">▲</span>
+                    </a>
+                  </th>
                   <th class="text-nowrap" style="width: 160px">期限日</th>
                   <th class="text-nowrap" style="width: 120px">優先度</th>
-                  <th class="text-nowrap" style="width: 120px">ステータス</th>
+                  <th class="text-nowrap" style="width: 120px">
+                    <a
+                      class="text-decoration-none"
+                      th:href="@{/todos(sort='completed', direction=${sort == 'completed' and direction == 'asc' ? 'desc' : 'asc'}, keyword=${keyword})}"
+                    >
+                      ステータス
+                      <span th:if="${sort == 'completed'}" th:text="${direction == 'asc' ? '▲' : '▼'}">▲</span>
+                    </a>
+                  </th>
                   <th class="text-nowrap" style="width: 200px">操作</th>
                 </tr>
               </thead>
               <tbody>
                 <tr th:each="todo : ${todos}" th:classappend="${todo.completed} ? 'table-secondary' : ''">
+                  <td th:text="${todo.createdAt != null ? #temporals.format(todo.createdAt, 'yyyy/MM/dd') : '-'}">2026/02/04</td>
                   <td>
                     <a
                       th:href="@{/todos/{id}(id=${todo.id})}"

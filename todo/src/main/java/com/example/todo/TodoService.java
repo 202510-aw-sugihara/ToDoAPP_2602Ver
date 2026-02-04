@@ -9,20 +9,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class TodoService {
 
   private final TodoRepository todoRepository;
+  private final TodoMapper todoMapper;
 
-  public TodoService(TodoRepository todoRepository) {
+  public TodoService(TodoRepository todoRepository, TodoMapper todoMapper) {
     this.todoRepository = todoRepository;
+    this.todoMapper = todoMapper;
   }
 
   public List<Todo> findAll() {
     return todoRepository.findAllByOrderByCreatedAtDesc();
   }
 
-  public List<Todo> findAll(String keyword) {
-    if (keyword == null || keyword.isBlank()) {
-      return findAll();
-    }
-    return todoRepository.searchByTitle(keyword.trim());
+  public List<Todo> findAll(String keyword, String sort, String direction) {
+    String safeSort = (sort == null || sort.isBlank()) ? "createdAt" : sort;
+    String safeDirection = (direction == null || direction.isBlank()) ? "desc" : direction;
+    String safeKeyword = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+    return todoMapper.search(safeKeyword, safeSort, safeDirection);
   }
 
   public Optional<Todo> findById(long id) {
