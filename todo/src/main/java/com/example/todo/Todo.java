@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -39,8 +41,9 @@ public class Todo {
 
   private LocalDate dueDate;
 
-  @Column(nullable = false)
-  private Integer priority = 1;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 10)
+  private Priority priority = Priority.MEDIUM;
 
   @Column(nullable = false)
   private Boolean completed = false;

@@ -29,7 +29,7 @@
             <dt class="col-sm-3">期限日</dt>
             <dd class="col-sm-9" th:text="${todo.dueDate}">2026-02-04</dd>
             <dt class="col-sm-3">優先度</dt>
-            <dd class="col-sm-9" th:text="${todo.priority}">1</dd>
+            <dd class="col-sm-9" th:text="${todo.priority != null ? todo.priority.label : '-'}">中</dd>
             <dt class="col-sm-3">完了</dt>
             <dd class="col-sm-9">
               <span th:if="${todo.completed}">完了</span>

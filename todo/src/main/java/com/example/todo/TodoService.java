@@ -69,7 +69,7 @@ public class TodoService {
     todo.setTitle(form.getTitle());
     todo.setDescription(form.getDetail());
     todo.setDueDate(form.getDueDate());
-    todo.setPriority(form.getPriority());
+    todo.setPriority(form.getPriority() != null ? form.getPriority() : Priority.MEDIUM);
     todo.setCompleted(Boolean.TRUE.equals(form.getCompleted()));
     todo.setVersion(form.getVersion());
     return todoRepository.save(todo);
@@ -94,13 +94,12 @@ public class TodoService {
   }
 
   private Todo toEntity(TodoForm form) {
-    Integer priority = form.getPriority() != null ? form.getPriority() : 1;
     return Todo.builder()
         .author(form.getAuthor())
         .title(form.getTitle())
         .description(form.getDetail())
         .dueDate(form.getDueDate())
-        .priority(priority)
+        .priority(form.getPriority() != null ? form.getPriority() : Priority.MEDIUM)
         .completed(false)
         .build();
   }

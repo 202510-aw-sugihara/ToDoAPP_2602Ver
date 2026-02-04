@@ -31,7 +31,7 @@
             <dt class="col-sm-3">期限日</dt>
             <dd class="col-sm-9" th:text="${todoForm.dueDate}">2026-02-04</dd>
             <dt class="col-sm-3">優先度</dt>
-            <dd class="col-sm-9" th:text="${todoForm.priority}">3</dd>
+            <dd class="col-sm-9" th:text="${todoForm.priority != null ? todoForm.priority.label : '-'}">中</dd>
           </dl>
           <div class="d-flex gap-2">
             <form th:action="@{/todos/back}" th:object="${todoForm}" method="post">

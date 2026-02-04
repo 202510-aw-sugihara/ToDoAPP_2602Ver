@@ -52,7 +52,14 @@
             </div>
             <div>
               <label class="form-label">優先度</label>
-              <input class="form-control" type="number" min="1" max="5" th:field="*{priority}" />
+              <select class="form-select" th:field="*{priority}">
+                <option value="" disabled>選択してください</option>
+                <option th:each="p : ${T(com.example.todo.Priority).values()}"
+                        th:value="${p}"
+                        th:text="${p.label}">
+                  高
+                </option>
+              </select>
               <div class="text-danger small" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}">
                 優先度のエラー
               </div>

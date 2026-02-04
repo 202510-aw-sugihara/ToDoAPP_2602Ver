@@ -1,8 +1,6 @@
 package com.example.todo;
 
 import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -36,9 +34,7 @@ public class TodoForm {
   private LocalDate dueDate;
 
   @NotNull(message = "優先度は必須です。")
-  @Min(value = 1, message = "優先度は1以上を指定してください。")
-  @Max(value = 5, message = "優先度は5以下を指定してください。")
-  private Integer priority;
+  private Priority priority;
 
   private Boolean completed;
 

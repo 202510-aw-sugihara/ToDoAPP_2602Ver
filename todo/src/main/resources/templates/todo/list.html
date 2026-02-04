@@ -82,7 +82,14 @@
                     2026/02/04
                   </td>
                   <td>
-                    <span th:if="${todo.priority != null}" th:text="${'★'.repeat(todo.priority)}">★★★</span>
+                    <span
+                      th:if="${todo.priority != null}"
+                      class="badge"
+                      th:classappend="${todo.priority.cssClass}"
+                      th:text="${todo.priority.label}"
+                    >
+                      中
+                    </span>
                     <span th:if="${todo.priority == null}">-</span>
                   </td>
                   <td>
