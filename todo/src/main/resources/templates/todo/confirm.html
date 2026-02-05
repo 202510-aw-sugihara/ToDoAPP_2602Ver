@@ -33,7 +33,14 @@
             <dt class="col-sm-3">優先度</dt>
             <dd class="col-sm-9" th:text="${todoForm.priority != null ? todoForm.priority.label : '-'}">中</dd>
             <dt class="col-sm-3">カテゴリ</dt>
-            <dd class="col-sm-9" th:text="${todoForm.categoryId}">-</dd>
+            <dd class="col-sm-9">
+              <span th:if="${todoForm.categoryId == null}">-</span>
+              <span th:each="c : ${categories}"
+                    th:if="${c.id == todoForm.categoryId}"
+                    th:text="${c.name}">
+                -
+              </span>
+            </dd>
           </dl>
           <div class="d-flex gap-2">
             <form th:action="@{/todos/back}" th:object="${todoForm}" method="post">
