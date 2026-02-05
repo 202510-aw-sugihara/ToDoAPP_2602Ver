@@ -30,6 +30,14 @@ public class CustomUserDetailsService implements UserDetailsService {
         .map(SimpleGrantedAuthority::new)
         .collect(Collectors.toList());
 
-    return new User(user.getUsername(), user.getPassword(), authorities);
+    boolean enabled = user.getEnabled() == null || user.getEnabled();
+    return User.withUsername(user.getUsername())
+        .password(user.getPassword())
+        .authorities(authorities)
+        .accountLocked(false)
+        .accountExpired(false)
+        .credentialsExpired(false)
+        .disabled(!enabled)
+        .build();
   }
 }

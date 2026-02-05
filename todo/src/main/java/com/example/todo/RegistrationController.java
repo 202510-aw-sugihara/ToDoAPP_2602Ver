@@ -57,6 +57,7 @@ public class RegistrationController {
         .username(form.getUsername())
         .password(passwordEncoder.encode(form.getPassword()))
         .roles("ROLE_USER")
+        .enabled(true)
         .build();
     appUserRepository.save(user);
 
