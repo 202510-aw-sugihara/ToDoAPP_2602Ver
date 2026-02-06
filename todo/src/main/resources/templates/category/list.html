@@ -14,7 +14,12 @@
   <body class="bg-light">
     <header class="border-bottom bg-white">
       <div class="container py-3 d-flex align-items-center justify-content-between">
-        <h1 class="h4 mb-0" th:text="#{title.category_list}">Categories</h1>
+        <div class="d-flex align-items-center gap-2">
+          <h1 class="h4 mb-0" th:text="#{title.category_list}">Categories</h1>
+          <a class="btn btn-primary btn-sm" th:href="@{/categories/new}" th:text="#{btn.category_create}">
+            New
+          </a>
+        </div>
         <div class="dropdown">
   <button class="btn btn-outline-secondary dropdown-toggle"
           type="button"

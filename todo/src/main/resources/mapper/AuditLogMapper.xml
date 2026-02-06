@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.todo.AuditLogMapper">
+  <resultMap id="AuditLogResultMap" type="com.example.todo.AuditLog">
+    <id column="id" property="id"/>
+    <result column="action" property="action"/>
+    <result column="username" property="username"/>
+    <result column="target_type" property="targetType"/>
+    <result column="target_id" property="targetId"/>
+    <result column="detail" property="detail"/>
+    <result column="before_value" property="beforeValue"/>
+    <result column="after_value" property="afterValue"/>
+    <result column="created_at" property="createdAt"/>
+  </resultMap>
+
+  <insert id="insert" parameterType="com.example.todo.AuditLog">
+    INSERT INTO audit_logs (
+      action,
+      username,
+      target_type,
+      target_id,
+      detail,
+      before_value,
+      after_value,
+      created_at
+    ) VALUES (
+      #{action},
+      #{username},
+      #{targetType},
+      #{targetId},
+      #{detail},
+      #{beforeValue},
+      #{afterValue},
+      #{createdAt}
+    )
+  </insert>
+
+  <select id="search" parameterType="map" resultMap="AuditLogResultMap">
+    SELECT
+      id,
+      action,
+      username,
+      target_type,
+      target_id,
+      detail,
+      before_value,
+      after_value,
+      created_at
+    FROM audit_logs
+    <where>
+      <if test="action != null and action != ''">
+        AND action LIKE CONCAT('%', #{action}, '%')
+      </if>
+      <if test="username != null and username != ''">
+        AND username LIKE CONCAT('%', #{username}, '%')
+      </if>
+      <if test="from != null">
+        AND created_at &gt;= #{from}
+      </if>
+      <if test="to != null">
+        AND created_at &lt;= #{to}
+      </if>
+    </where>
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="count" parameterType="map" resultType="long">
+    SELECT COUNT(*)
+    FROM audit_logs
+    <where>
+      <if test="action != null and action != ''">
+        AND action LIKE CONCAT('%', #{action}, '%')
+      </if>
+      <if test="username != null and username != ''">
+        AND username LIKE CONCAT('%', #{username}, '%')
+      </if>
+      <if test="from != null">
+        AND created_at &gt;= #{from}
+      </if>
+      <if test="to != null">
+        AND created_at &lt;= #{to}
+      </if>
+    </where>
+  </select>
+</mapper>

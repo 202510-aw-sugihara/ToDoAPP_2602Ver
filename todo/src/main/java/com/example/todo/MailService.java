@@ -36,6 +36,10 @@ public class MailService {
       log.warn("skip todo created mail: user email missing");
       return;
     }
+    if (fromAddress == null || fromAddress.isBlank()) {
+      log.warn("skip todo created mail: from address missing");
+      return;
+    }
     SimpleMailMessage message = new SimpleMailMessage();
     message.setFrom(fromAddress);
     message.setTo(user.getEmail());
@@ -47,6 +51,10 @@ public class MailService {
   public void sendDueSoonReminder(AppUser user, List<Todo> todos) {
     if (user == null || user.getEmail() == null || user.getEmail().isBlank()) {
       log.warn("skip reminder mail: user email missing");
+      return;
+    }
+    if (fromAddress == null || fromAddress.isBlank()) {
+      log.warn("skip reminder mail: from address missing");
       return;
     }
     if (todos == null || todos.isEmpty()) {
@@ -69,6 +77,10 @@ public class MailService {
   }
 
   private void sendHtml(String to, String subject, String html) {
+    if (fromAddress == null || fromAddress.isBlank()) {
+      log.warn("skip html mail: from address missing");
+      return;
+    }
     MimeMessage message = mailSender.createMimeMessage();
     try {
       MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");

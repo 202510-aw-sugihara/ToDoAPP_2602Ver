@@ -483,6 +483,13 @@ public class TodoController {
       Todo existing = todoService.findById(id)
           .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
       ensureOwner(existing, requireUserId(userDetails));
+      if (!Boolean.TRUE.equals(existing.getCompleted())) {
+        if (ajax) {
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "not_allowed"));
+        }
+        redirectAttributes.addFlashAttribute("errorMessage", "未完了から完了への変更はできません。");
+        return "redirect:/todos";
+      }
       boolean completed = todoService.toggleCompleted(id);
       if (ajax) {
         return ResponseEntity.ok(Map.of("completed", completed));

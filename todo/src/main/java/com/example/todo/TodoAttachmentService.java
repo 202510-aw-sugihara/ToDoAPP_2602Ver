@@ -88,4 +88,20 @@ public class TodoAttachmentService {
     todoAttachmentMapper.deleteById(attachment.getId());
     fileStorageService.delete(attachment.getStoredFilename());
   }
+
+  @Transactional
+  public void deleteByTodoId(long todoId) {
+    List<TodoAttachment> attachments = todoAttachmentMapper.findByTodoId(todoId);
+    for (TodoAttachment attachment : attachments) {
+      if (attachment == null) {
+        continue;
+      }
+      if (attachment.getId() != null) {
+        todoAttachmentMapper.deleteById(attachment.getId());
+      }
+      if (attachment.getStoredFilename() != null && !attachment.getStoredFilename().isBlank()) {
+        fileStorageService.delete(attachment.getStoredFilename());
+      }
+    }
+  }
 }

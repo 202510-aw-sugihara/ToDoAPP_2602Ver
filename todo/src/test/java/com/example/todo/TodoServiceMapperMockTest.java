@@ -37,6 +37,9 @@ class TodoServiceMapperMockTest {
   @Mock
   private MailService mailService;
 
+  @Mock
+  private TodoAttachmentService todoAttachmentService;
+
   @InjectMocks
   private TodoService todoService;
 

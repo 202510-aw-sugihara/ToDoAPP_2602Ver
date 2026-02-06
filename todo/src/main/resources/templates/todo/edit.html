@@ -148,7 +148,7 @@
                 <input type="hidden" name="_method" value="DELETE" />
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <button type="submit" class="btn btn-sm btn-outline-danger"
-                        onclick="return confirm('#{msg.confirm_delete}')"
+                        th:onclick="|return confirm('${#messages.msg('msg.confirm_delete')}')|"
                         th:text="#{btn.delete}">
                   Delete
                 </button>

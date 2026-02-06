@@ -38,4 +38,8 @@
   <delete id="deleteById">
     DELETE FROM todo_attachments WHERE id = #{id}
   </delete>
+
+  <delete id="deleteByTodoId">
+    DELETE FROM todo_attachments WHERE todo_id = #{todoId}
+  </delete>
 </mapper>

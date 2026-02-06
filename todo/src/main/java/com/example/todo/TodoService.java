@@ -17,16 +17,19 @@ public class TodoService {
   private final AppUserRepository appUserRepository;
   private final AuditLogService auditLogService;
   private final MailService mailService;
+  private final TodoAttachmentService todoAttachmentService;
 
   public TodoService(TodoRepository todoRepository, TodoMapper todoMapper,
       CategoryRepository categoryRepository, AppUserRepository appUserRepository,
-      AuditLogService auditLogService, MailService mailService) {
+      AuditLogService auditLogService, MailService mailService,
+      TodoAttachmentService todoAttachmentService) {
     this.todoRepository = todoRepository;
     this.todoMapper = todoMapper;
     this.categoryRepository = categoryRepository;
     this.appUserRepository = appUserRepository;
     this.auditLogService = auditLogService;
     this.mailService = mailService;
+    this.todoAttachmentService = todoAttachmentService;
   }
 
   @Transactional(readOnly = true)
@@ -109,6 +112,7 @@ public class TodoService {
   }
 
   @Transactional(rollbackFor = Exception.class, noRollbackFor = BusinessException.class)
+  @Auditable(action = "TODO_CREATE", targetType = "Todo")
   public Todo create(long userId, TodoForm form) {
     Todo todo = toEntity(userId, form);
     Todo saved = todoRepository.save(todo);
@@ -118,6 +122,7 @@ public class TodoService {
   }
 
   @Transactional(rollbackFor = Exception.class, noRollbackFor = BusinessException.class)
+  @Auditable(action = "TODO_UPDATE", targetType = "Todo")
   public Todo update(long id, TodoForm form) {
     Todo todo = todoRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("Todo not found: " + id));
@@ -135,10 +140,12 @@ public class TodoService {
   }
 
   @Transactional(rollbackFor = Exception.class, noRollbackFor = BusinessException.class)
+  @Auditable(action = "TODO_DELETE", targetType = "Todo")
   public void deleteById(long id) {
     if (!todoRepository.existsById(id)) {
       throw new IllegalArgumentException("Todo not found: " + id);
     }
+    todoAttachmentService.deleteByTodoId(id);
     todoRepository.deleteById(id);
     auditLogService.record("TODO_DELETE", "todoId=" + id);
   }

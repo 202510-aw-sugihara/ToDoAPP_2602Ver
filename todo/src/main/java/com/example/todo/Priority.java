@@ -1,4 +1,4 @@
-﻿package com.example.todo;
+package com.example.todo;
 
 public enum Priority {
   HIGH("High", "text-bg-danger"),

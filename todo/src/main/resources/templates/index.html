@@ -171,7 +171,6 @@
                       <input type="hidden" name="_method" value="DELETE" />
                       <button class="btn btn-sm btn-outline-danger" type="submit"
                               data-delete-trigger th:attr="data-title=${todo.title}"
-                              onclick="return confirm('#{msg.confirm_delete}')"
                               th:text="#{btn.delete}">
                         Delete
                       </button>

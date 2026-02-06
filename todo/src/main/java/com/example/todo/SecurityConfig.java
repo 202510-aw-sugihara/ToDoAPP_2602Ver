@@ -37,7 +37,7 @@ public class SecurityConfig {
             .logoutSuccessUrl("/login?logout")
             .permitAll()
         )
-        .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+        .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/todos/*/toggle"))
         .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
         .httpBasic(Customizer.withDefaults());
     return http.build();
