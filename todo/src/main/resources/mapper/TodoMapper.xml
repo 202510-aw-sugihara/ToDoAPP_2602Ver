@@ -26,7 +26,7 @@
   </resultMap>
 
   <select id="search" parameterType="map" resultMap="TodoResultMap">
-    SELECT
+    SELECT DISTINCT
       t.id,
       t.author,
       t.title,
@@ -44,6 +44,7 @@
       c.color AS category_color
     FROM todos t
     LEFT JOIN categories c ON c.id = t.category_id
+    LEFT JOIN todo_groups tg ON tg.todo_id = t.id
     <where>
       AND t.deleted_at IS NULL
       <if test="userId != null">
@@ -54,6 +55,12 @@
       </if>
       <if test="categoryId != null">
         AND t.category_id = #{categoryId}
+      </if>
+      <if test="groupIds != null and groupIds.size > 0">
+        AND tg.group_id IN
+        <foreach collection="groupIds" item="gid" open="(" separator="," close=")">
+          #{gid}
+        </foreach>
       </if>
     </where>
     <choose>
@@ -71,18 +78,25 @@
   </select>
 
   <select id="count" parameterType="map" resultType="long">
-    SELECT COUNT(*)
-    FROM todos
+    SELECT COUNT(DISTINCT t.id)
+    FROM todos t
+    LEFT JOIN todo_groups tg ON tg.todo_id = t.id
     <where>
-      AND deleted_at IS NULL
+      AND t.deleted_at IS NULL
       <if test="userId != null">
-        AND user_id = #{userId}
+        AND t.user_id = #{userId}
       </if>
       <if test="keyword != null and keyword != ''">
-        AND title LIKE CONCAT('%', #{keyword}, '%')
+        AND t.title LIKE CONCAT('%', #{keyword}, '%')
       </if>
       <if test="categoryId != null">
-        AND category_id = #{categoryId}
+        AND t.category_id = #{categoryId}
+      </if>
+      <if test="groupIds != null and groupIds.size > 0">
+        AND tg.group_id IN
+        <foreach collection="groupIds" item="gid" open="(" separator="," close=")">
+          #{gid}
+        </foreach>
       </if>
     </where>
   </select>

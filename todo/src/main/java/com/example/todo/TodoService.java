@@ -2,6 +2,10 @@ package com.example.todo;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -18,11 +22,12 @@ public class TodoService {
   private final AuditLogService auditLogService;
   private final MailService mailService;
   private final TodoAttachmentService todoAttachmentService;
+  private final GroupRepository groupRepository;
 
   public TodoService(TodoRepository todoRepository, TodoMapper todoMapper,
       CategoryRepository categoryRepository, AppUserRepository appUserRepository,
       AuditLogService auditLogService, MailService mailService,
-      TodoAttachmentService todoAttachmentService) {
+      TodoAttachmentService todoAttachmentService, GroupRepository groupRepository) {
     this.todoRepository = todoRepository;
     this.todoMapper = todoMapper;
     this.categoryRepository = categoryRepository;
@@ -30,6 +35,7 @@ public class TodoService {
     this.auditLogService = auditLogService;
     this.mailService = mailService;
     this.todoAttachmentService = todoAttachmentService;
+    this.groupRepository = groupRepository;
   }
 
   @Transactional(readOnly = true)
@@ -39,18 +45,20 @@ public class TodoService {
 
   @Transactional(readOnly = true)
   public Page<Todo> findPage(long userId, String keyword, String sort, String direction,
-      Long categoryId,
+      Long categoryId, Long groupId,
       Pageable pageable) {
     String safeSort = (sort == null || sort.isBlank()) ? "createdAt" : sort;
     String safeDirection = (direction == null || direction.isBlank()) ? "desc" : direction;
     String safeKeyword = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
-    long total = todoMapper.count(safeKeyword, userId, categoryId);
+    List<Long> groupIds = resolveGroupFilterIds(groupId);
+    long total = todoMapper.count(safeKeyword, userId, categoryId, groupIds);
     List<Todo> content = todoMapper.search(
         safeKeyword,
         userId,
         safeSort,
         safeDirection,
         categoryId,
+        groupIds,
         pageable.getPageSize(),
         (int) pageable.getOffset());
     return new PageImpl<>(content, pageable, total);
@@ -58,16 +66,17 @@ public class TodoService {
 
   @Transactional(readOnly = true)
   public List<Todo> findForExport(long userId, String keyword, String sort, String direction,
-      Long categoryId) {
+      Long categoryId, Long groupId) {
     String safeSort = (sort == null || sort.isBlank()) ? "createdAt" : sort;
     String safeDirection = (direction == null || direction.isBlank()) ? "desc" : direction;
     String safeKeyword = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
-    long total = todoMapper.count(safeKeyword, userId, categoryId);
+    List<Long> groupIds = resolveGroupFilterIds(groupId);
+    long total = todoMapper.count(safeKeyword, userId, categoryId, groupIds);
     if (total <= 0) {
       return List.of();
     }
     int limit = total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
-    return todoMapper.search(safeKeyword, userId, safeSort, safeDirection, categoryId, limit, 0);
+    return todoMapper.search(safeKeyword, userId, safeSort, safeDirection, categoryId, groupIds, limit, 0);
   }
 
   @Transactional(readOnly = true)
@@ -117,6 +126,13 @@ public class TodoService {
     form.setDueDate(todo.getDueDate());
     form.setPriority(todo.getPriority());
     form.setCategoryId(todo.getCategory() != null ? todo.getCategory().getId() : null);
+    if (todo.getGroups() != null && !todo.getGroups().isEmpty()) {
+      java.util.List<Long> ids = todo.getGroups().stream()
+          .filter(g -> g != null && g.getId() != null)
+          .map(Group::getId)
+          .toList();
+      form.setGroupIds(ids);
+    }
     form.setCompleted(todo.getCompleted());
     form.setVersion(todo.getVersion());
     return form;
@@ -144,6 +160,7 @@ public class TodoService {
     todo.setPriority(form.getPriority() != null ? form.getPriority() : Priority.MEDIUM);
     todo.setCategory(resolveCategory(form.getCategoryId()));
     todo.setCompleted(Boolean.TRUE.equals(form.getCompleted()));
+    todo.setGroups(resolveGroups(form.getGroupIds()));
     todo.setVersion(form.getVersion());
     Todo saved = todoRepository.save(todo);
     auditLogService.record("TODO_UPDATE", "todoId=" + saved.getId());
@@ -214,6 +231,7 @@ public class TodoService {
         .priority(form.getPriority() != null ? form.getPriority() : Priority.MEDIUM)
         .category(resolveCategory(form.getCategoryId()))
         .user(resolveUser(userId))
+        .groups(resolveGroups(form.getGroupIds()))
         .completed(false)
         .build();
   }
@@ -228,6 +246,61 @@ public class TodoService {
   private AppUser resolveUser(long userId) {
     return appUserRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+  }
+
+  private java.util.Set<Group> resolveGroups(java.util.List<Long> groupIds) {
+    if (groupIds == null || groupIds.isEmpty()) {
+      return groupRepository.findByNameIgnoreCaseAndType("個人", GroupType.PROJECT)
+          .map(java.util.Set::of)
+          .orElse(java.util.Collections.emptySet());
+    }
+    java.util.List<Group> groups = groupRepository.findAllById(groupIds);
+    return new java.util.HashSet<>(groups);
+  }
+
+  private List<Long> resolveGroupFilterIds(Long groupId) {
+    if (groupId == null) {
+      return null;
+    }
+    Group selected = groupRepository.findById(groupId).orElse(null);
+    if (selected == null) {
+      return null;
+    }
+    if (selected.getType() == GroupType.PROJECT) {
+      return List.of(selected.getId());
+    }
+    List<Group> allGroups = groupRepository.findAll();
+    Map<Long, List<Group>> children = new HashMap<>();
+    for (Group group : allGroups) {
+      Long parentId = group.getParentId();
+      if (parentId == null) {
+        continue;
+      }
+      children.computeIfAbsent(parentId, k -> new ArrayList<>()).add(group);
+    }
+    List<Long> projectIds = new ArrayList<>();
+    ArrayDeque<Group> stack = new ArrayDeque<>();
+    stack.push(selected);
+    while (!stack.isEmpty()) {
+      Group current = stack.pop();
+      List<Group> kids = children.get(current.getId());
+      if (kids == null) {
+        continue;
+      }
+      for (Group child : kids) {
+        if (child.getType() == GroupType.PROJECT) {
+          if (child.getId() != null) {
+            projectIds.add(child.getId());
+          }
+        } else {
+          stack.push(child);
+        }
+      }
+    }
+    if (projectIds.isEmpty()) {
+      return List.of(-1L);
+    }
+    return projectIds;
   }
 
   private boolean userIdEquals(Todo todo, long userId) {

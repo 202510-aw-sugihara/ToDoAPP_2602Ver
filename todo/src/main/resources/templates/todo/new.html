@@ -93,6 +93,13 @@
               </select>
             </div>
             <div>
+              <label class="form-label" th:text="#{label.group}">Group</label>
+              <select class="form-select" th:field="*{groupIds}" multiple>
+                <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">Group</option>
+              </select>
+              <div class="form-text" th:text="#{msg.group_multi_hint}">Select multiple groups.</div>
+            </div>
+            <div>
               <label class="form-label" th:text="#{label.attachments}">Attachments</label>
               <div id="new-file-inputs" class="vstack gap-2">
                 <input class="form-control" type="file" name="files" />

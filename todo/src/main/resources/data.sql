@@ -4,3 +4,7 @@ insert into categories (name, color) values ('緊急', '#dc3545');
 insert into categories (name, color) values ('その他', '#fd7e14');
 insert into users (username, password, roles, email, enabled) values ('user', '{noop}password', 'ROLE_USER', 'user@example.com', true);
 insert into users (username, password, roles, email, enabled) values ('admin', '{noop}adminpass', 'ROLE_ADMIN', 'admin@example.com', true);
+insert into groups (name, type, color) values ('Project', 'PROJECT', '#0d6efd');
+insert into groups (name, type, color) values ('Team', 'TEAM', '#198754');
+insert into groups (name, type, color) values ('Client', 'CLIENT', '#dc3545');
+insert into groups (name, type, color) values ('Personal', 'TEAM', '#6c757d');

@@ -50,6 +50,15 @@
               <span th:if="${todo.completed}" th:text="#{label.completed}">Completed</span>
               <span th:unless="${todo.completed}" th:text="#{label.not_completed}">Not completed</span>
             </dd>
+            <dt class="col-sm-3" th:text="#{label.group}">Group</dt>
+            <dd class="col-sm-9">
+              <span th:if="${todo.groups == null or #lists.isEmpty(todo.groups)}">-</span>
+              <span th:each="g : ${todo.groups}"
+                    class="badge text-bg-secondary me-1"
+                    th:text="${g.name}">
+                Group
+              </span>
+            </dd>
           </dl>
           <div class="mb-4">
             <h2 class="h6 mb-3" th:text="#{label.attachments}">Attachments</h2>

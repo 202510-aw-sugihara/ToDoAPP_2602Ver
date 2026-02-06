@@ -8,13 +8,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -54,6 +58,13 @@ public class Todo {
   @ManyToOne
   @JoinColumn(name = "user_id", nullable = false)
   private AppUser user;
+
+  @ManyToMany
+  @JoinTable(
+      name = "todo_groups",
+      joinColumns = @JoinColumn(name = "todo_id"),
+      inverseJoinColumns = @JoinColumn(name = "group_id"))
+  private Set<Group> groups = new HashSet<>();
 
   @Column(nullable = false)
   private Boolean completed = false;

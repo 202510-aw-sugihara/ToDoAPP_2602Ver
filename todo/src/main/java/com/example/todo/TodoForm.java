@@ -38,6 +38,8 @@ public class TodoForm {
 
   private Long categoryId;
 
+  private java.util.List<Long> groupIds;
+
   private Boolean completed;
 
   private Long version;

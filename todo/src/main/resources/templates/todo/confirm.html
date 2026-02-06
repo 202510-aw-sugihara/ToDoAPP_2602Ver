@@ -54,15 +54,25 @@
             <dt class="col-sm-3" th:text="#{label.priority}">Priority</dt>
             <dd class="col-sm-9"
                 th:text="${todoForm.priority != null ? #messages.msg('priority.' + todoForm.priority.name().toLowerCase()) : '-'}">-</dd>
-            <dt class="col-sm-3" th:text="#{label.category}">Category</dt>
-            <dd class="col-sm-9">
-              <span th:if="${todoForm.categoryId == null}">-</span>
-              <span th:each="c : ${categories}"
-                    th:if="${c.id == todoForm.categoryId}"
-                    th:text="${categoryLabels[c.id]}">
-                -
-              </span>
-            </dd>
+              <dt class="col-sm-3" th:text="#{label.category}">Category</dt>
+              <dd class="col-sm-9">
+                <span th:if="${todoForm.categoryId == null}">-</span>
+                <span th:each="c : ${categories}"
+                     th:if="${c.id == todoForm.categoryId}"
+                     th:text="${categoryLabels[c.id]}">
+                  -
+                </span>
+              </dd>
+              <dt class="col-sm-3" th:text="#{label.group}">Group</dt>
+              <dd class="col-sm-9">
+                <span th:if="${todoForm.groupIds == null or #lists.isEmpty(todoForm.groupIds)}">-</span>
+                <span th:each="g : ${groups}"
+                      th:if="${todoForm.groupIds != null and todoForm.groupIds.contains(g.id)}"
+                      class="badge text-bg-secondary me-1"
+                      th:text="${g.name}">
+                  Group
+                </span>
+              </dd>
             <dt class="col-sm-3" th:text="#{label.attachments}">Attachments</dt>
             <dd class="col-sm-9">
               <span th:if="${todoForm.attachmentOriginalFilenames == null || #lists.isEmpty(todoForm.attachmentOriginalFilenames)}">-</span>
@@ -89,6 +99,7 @@
               <input type="hidden" th:field="*{dueDate}" />
               <input type="hidden" th:field="*{priority}" />
               <input type="hidden" th:field="*{categoryId}" />
+              <input type="hidden" th:each="gid : ${todoForm.groupIds}" th:name="groupIds" th:value="${gid}" />
               <input type="hidden" th:each="v : ${todoForm.attachmentOriginalFilenames}" th:name="attachmentOriginalFilenames" th:value="${v}" />
               <input type="hidden" th:each="v : ${todoForm.attachmentStoredFilenames}" th:name="attachmentStoredFilenames" th:value="${v}" />
               <input type="hidden" th:each="v : ${todoForm.attachmentContentTypes}" th:name="attachmentContentTypes" th:value="${v}" />
@@ -102,6 +113,7 @@
               <input type="hidden" th:field="*{dueDate}" />
               <input type="hidden" th:field="*{priority}" />
               <input type="hidden" th:field="*{categoryId}" />
+              <input type="hidden" th:each="gid : ${todoForm.groupIds}" th:name="groupIds" th:value="${gid}" />
               <input type="hidden" th:each="v : ${todoForm.attachmentOriginalFilenames}" th:name="attachmentOriginalFilenames" th:value="${v}" />
               <input type="hidden" th:each="v : ${todoForm.attachmentStoredFilenames}" th:name="attachmentStoredFilenames" th:value="${v}" />
               <input type="hidden" th:each="v : ${todoForm.attachmentContentTypes}" th:name="attachmentContentTypes" th:value="${v}" />

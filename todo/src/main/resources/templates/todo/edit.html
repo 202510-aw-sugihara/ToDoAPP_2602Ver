@@ -103,6 +103,13 @@
                 <option th:each="c : ${categories}" th:value="${c.id}" th:text="${categoryLabels[c.id]}">Category</option>
               </select>
             </div>
+            <div>
+              <label class="form-label" th:text="#{label.group}">Group</label>
+              <select class="form-select" th:field="*{groupIds}" multiple>
+                <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">Group</option>
+              </select>
+              <div class="form-text" th:text="#{msg.group_multi_hint}">Select multiple groups.</div>
+            </div>
             <div class="form-check">
               <input class="form-check-input" type="checkbox" th:field="*{completed}" />
               <label class="form-check-label" th:text="#{label.completed}">Done</label>

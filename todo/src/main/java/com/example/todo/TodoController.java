@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -51,17 +52,20 @@ public class TodoController {
   private final TodoAttachmentService todoAttachmentService;
   private final FileStorageService fileStorageService;
   private final MessageSource messageSource;
+  private final GroupRepository groupRepository;
   private static final Pattern STORED_NAME_PATTERN = Pattern.compile("^[a-fA-F0-9]{32}.*$");
 
   public TodoController(TodoService todoService, CategoryRepository categoryRepository,
       AppUserRepository appUserRepository, TodoAttachmentService todoAttachmentService,
-      FileStorageService fileStorageService, MessageSource messageSource) {
+      FileStorageService fileStorageService, MessageSource messageSource,
+      GroupRepository groupRepository) {
     this.todoService = todoService;
     this.categoryRepository = categoryRepository;
     this.appUserRepository = appUserRepository;
     this.todoAttachmentService = todoAttachmentService;
     this.fileStorageService = fileStorageService;
     this.messageSource = messageSource;
+    this.groupRepository = groupRepository;
   }
 
   private String msg(String code) {
@@ -77,6 +81,42 @@ public class TodoController {
   @ModelAttribute("categories")
   public List<Category> categories() {
     return categoryRepository.findAll();
+  }
+
+  @ModelAttribute("groups")
+  public List<Group> groups() {
+    return groupRepository.findAllByOrderByTypeAscNameAsc();
+  }
+
+  @ModelAttribute("groupOptions")
+  public List<Map<String, Object>> groupOptions() {
+    List<Group> groups = groupRepository.findAllByOrderByTypeAscNameAsc();
+    List<Map<String, Object>> options = new ArrayList<>();
+    for (Group group : groups) {
+      if (group == null || group.getId() == null) {
+        continue;
+      }
+      Map<String, Object> row = new LinkedHashMap<>();
+      row.put("id", group.getId());
+      row.put("name", group.getName());
+      row.put("type", group.getType() == null ? null : group.getType().name());
+      row.put("parentId", group.getParentId());
+      row.put("color", group.getColor());
+      options.add(row);
+    }
+    return options;
+  }
+
+  @ModelAttribute("groupLabels")
+  public Map<Long, String> groupLabels() {
+    Map<Long, String> labels = new LinkedHashMap<>();
+    for (Group group : groupRepository.findAllByOrderByTypeAscNameAsc()) {
+      if (group == null || group.getId() == null) {
+        continue;
+      }
+      labels.put(group.getId(), group.getName());
+    }
+    return labels;
   }
 
   @ModelAttribute("categoryLabels")
@@ -99,18 +139,20 @@ public class TodoController {
       @RequestParam(required = false) String sort,
       @RequestParam(required = false) String direction,
       @RequestParam(required = false) Long categoryId,
+      @RequestParam(required = false) Long groupId,
       @PageableDefault(size = 10) Pageable pageable,
       @AuthenticationPrincipal UserDetails userDetails,
       Model model) {
 
     long userId = requireUserId(userDetails);
-    Page<Todo> page = todoService.findPage(userId, keyword, sort, direction, categoryId, pageable);
+    Page<Todo> page = todoService.findPage(userId, keyword, sort, direction, categoryId, groupId, pageable);
     model.addAttribute("todos", page.getContent());
     model.addAttribute("page", page);
     model.addAttribute("keyword", keyword == null ? "" : keyword);
     model.addAttribute("sort", sort == null ? "createdAt" : sort);
     model.addAttribute("direction", direction == null ? "desc" : direction);
     model.addAttribute("categoryId", categoryId);
+    model.addAttribute("groupId", groupId);
     model.addAttribute("resultCount", page.getTotalElements());
 
     long total = page.getTotalElements();
@@ -126,12 +168,13 @@ public class TodoController {
       @RequestParam(required = false) String sort,
       @RequestParam(required = false) String direction,
       @RequestParam(required = false) Long categoryId,
+      @RequestParam(required = false) Long groupId,
       @RequestParam(required = false) List<Long> ids,
       @AuthenticationPrincipal UserDetails userDetails) {
     long userId = requireUserId(userDetails);
     List<Todo> todos = (ids != null && !ids.isEmpty())
         ? todoService.findForExportByIds(userId, ids)
-        : todoService.findForExport(userId, keyword, sort, direction, categoryId);
+        : todoService.findForExport(userId, keyword, sort, direction, categoryId, groupId);
     if (todos.isEmpty()) {
       return ResponseEntity.noContent().build();
     }

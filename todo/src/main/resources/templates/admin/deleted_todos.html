@@ -100,6 +100,11 @@
         </div>
       </div>
     </main>
+    <footer class="border-top bg-white mt-4">
+      <div class="container py-3 text-muted small">
+        <a th:href="@{/admin/groups}" class="text-decoration-none" th:text="#{nav.group_admin}">Group Admin</a>
+      </div>
+    </footer>
   <script>
     (() => {
       const buttons = Array.from(document.querySelectorAll("[data-confirm-delete]"));
