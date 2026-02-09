@@ -73,6 +73,36 @@ public class TodoController {
     return messageSource.getMessage(code, null, locale);
   }
 
+  private String resolveGroupLabel(Group group) {
+    if (group == null) {
+      return "";
+    }
+    String name = group.getName();
+    if (name == null || name.isBlank()) {
+      return "";
+    }
+    Locale locale = LocaleContextHolder.getLocale();
+    String key = groupNameKey(name);
+    if (key == null) {
+      return name;
+    }
+    return messageSource.getMessage(key, null, name, locale);
+  }
+
+  private String groupNameKey(String name) {
+    if (name == null) {
+      return null;
+    }
+    String slug = name.trim()
+        .toLowerCase(Locale.ROOT)
+        .replaceAll("[^a-z0-9]+", "_")
+        .replaceAll("^_+|_+$", "");
+    if (!slug.isEmpty()) {
+      return "group.name." + slug;
+    }
+    return "group.name." + name.trim();
+  }
+
   @ModelAttribute("todoForm")
   public TodoForm todoForm() {
     return new TodoForm();
@@ -99,6 +129,7 @@ public class TodoController {
       Map<String, Object> row = new LinkedHashMap<>();
       row.put("id", group.getId());
       row.put("name", group.getName());
+      row.put("label", resolveGroupLabel(group));
       row.put("type", group.getType() == null ? null : group.getType().name());
       row.put("parentId", group.getParentId());
       row.put("color", group.getColor());
@@ -114,7 +145,7 @@ public class TodoController {
       if (group == null || group.getId() == null) {
         continue;
       }
-      labels.put(group.getId(), group.getName());
+      labels.put(group.getId(), resolveGroupLabel(group));
     }
     return labels;
   }

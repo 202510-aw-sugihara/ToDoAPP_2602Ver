@@ -3,10 +3,13 @@
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import jakarta.validation.Valid;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,12 +31,14 @@ public class AdminUserController {
   private final AppUserRepository appUserRepository;
   private final PasswordEncoder passwordEncoder;
   private final GroupRepository groupRepository;
+  private final MessageSource messageSource;
 
   public AdminUserController(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder,
-      GroupRepository groupRepository) {
+      GroupRepository groupRepository, MessageSource messageSource) {
     this.appUserRepository = appUserRepository;
     this.passwordEncoder = passwordEncoder;
     this.groupRepository = groupRepository;
+    this.messageSource = messageSource;
   }
 
   @GetMapping
@@ -255,12 +260,43 @@ public class AdminUserController {
       Map<String, Object> row = new LinkedHashMap<>();
       row.put("id", group.getId());
       row.put("name", group.getName());
+      row.put("label", resolveGroupLabel(group));
       row.put("type", group.getType() == null ? null : group.getType().name());
       row.put("parentId", group.getParentId());
       row.put("color", group.getColor());
       options.add(row);
     }
     return options;
+  }
+
+  private String resolveGroupLabel(Group group) {
+    if (group == null) {
+      return "";
+    }
+    String name = group.getName();
+    if (name == null || name.isBlank()) {
+      return "";
+    }
+    Locale locale = LocaleContextHolder.getLocale();
+    String key = groupNameKey(name);
+    if (key == null) {
+      return name;
+    }
+    return messageSource.getMessage(key, null, name, locale);
+  }
+
+  private String groupNameKey(String name) {
+    if (name == null) {
+      return null;
+    }
+    String slug = name.trim()
+        .toLowerCase(Locale.ROOT)
+        .replaceAll("[^a-z0-9]+", "_")
+        .replaceAll("^_+|_+$", "");
+    if (!slug.isEmpty()) {
+      return "group.name." + slug;
+    }
+    return "group.name." + name.trim();
   }
 }
 

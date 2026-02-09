@@ -256,7 +256,7 @@
             label.appendChild(dot);
           }
           const text = document.createElement("span");
-          text.textContent = node.name;
+          text.textContent = node.label || node.name || "";
           label.appendChild(text);
           li.appendChild(label);
 

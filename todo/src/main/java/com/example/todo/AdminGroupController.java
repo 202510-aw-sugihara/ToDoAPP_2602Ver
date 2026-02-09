@@ -1,8 +1,10 @@
 package com.example.todo;
 
 import jakarta.validation.Valid;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +37,7 @@ public class AdminGroupController {
     List<Group> parentCandidates = groupRepository.findAllByOrderByTypeAscNameAsc();
     model.addAttribute("groups", groups);
     model.addAttribute("parentCandidates", parentCandidates);
+    model.addAttribute("groupLabels", buildGroupLabels());
     return "admin/groups";
   }
 
@@ -49,6 +53,7 @@ public class AdminGroupController {
       List<Group> parentCandidates = groupRepository.findAllByOrderByTypeAscNameAsc();
       model.addAttribute("groups", groups);
       model.addAttribute("parentCandidates", parentCandidates);
+      model.addAttribute("groupLabels", buildGroupLabels());
       return "admin/groups";
     }
     Group group = Group.builder()
@@ -59,6 +64,57 @@ public class AdminGroupController {
         .build();
     groupRepository.save(group);
     redirectAttributes.addFlashAttribute("successMessage", msg("msg.group_created"));
+    return "redirect:/admin/groups";
+  }
+
+  @GetMapping("/{id}/edit")
+  public String edit(@PathVariable("id") long id, Model model,
+      RedirectAttributes redirectAttributes) {
+    Group group = groupRepository.findById(id).orElse(null);
+    if (group == null) {
+      redirectAttributes.addFlashAttribute("errorMessage", msg("msg.not_found"));
+      return "redirect:/admin/groups";
+    }
+    GroupForm form = new GroupForm();
+    form.setName(group.getName());
+    form.setType(group.getType());
+    form.setParentId(group.getParentId());
+    form.setColor(group.getColor());
+    model.addAttribute("group", group);
+    model.addAttribute("groupForm", form);
+    model.addAttribute("parentCandidates", groupRepository.findAllByOrderByTypeAscNameAsc());
+    model.addAttribute("groupLabels", buildGroupLabels());
+    return "admin/group_edit";
+  }
+
+  @PostMapping("/{id}/update")
+  public String update(@PathVariable("id") long id,
+      @Valid @ModelAttribute("groupForm") GroupForm form,
+      BindingResult bindingResult,
+      RedirectAttributes redirectAttributes,
+      Model model) {
+    Group group = groupRepository.findById(id).orElse(null);
+    if (group == null) {
+      redirectAttributes.addFlashAttribute("errorMessage", msg("msg.not_found"));
+      return "redirect:/admin/groups";
+    }
+    if (form.getParentId() != null && form.getParentId().longValue() == id) {
+      bindingResult.rejectValue("parentId", "group.parent.invalid");
+    }
+    Group parent = resolveParent(form);
+    validateParent(form, parent, bindingResult);
+    if (bindingResult.hasErrors()) {
+      model.addAttribute("group", group);
+      model.addAttribute("parentCandidates", groupRepository.findAllByOrderByTypeAscNameAsc());
+      model.addAttribute("groupLabels", buildGroupLabels());
+      return "admin/group_edit";
+    }
+    group.setName(form.getName());
+    group.setType(form.getType());
+    group.setParent(parent);
+    group.setColor(form.getColor());
+    groupRepository.save(group);
+    redirectAttributes.addFlashAttribute("successMessage", msg("msg.group_updated"));
     return "redirect:/admin/groups";
   }
 
@@ -96,5 +152,46 @@ public class AdminGroupController {
   private String msg(String code) {
     Locale locale = LocaleContextHolder.getLocale();
     return messageSource.getMessage(code, null, locale);
+  }
+
+  private Map<Long, String> buildGroupLabels() {
+    Map<Long, String> labels = new LinkedHashMap<>();
+    for (Group group : groupRepository.findAllByOrderByTypeAscNameAsc()) {
+      if (group == null || group.getId() == null) {
+        continue;
+      }
+      labels.put(group.getId(), resolveGroupLabel(group));
+    }
+    return labels;
+  }
+
+  private String resolveGroupLabel(Group group) {
+    if (group == null) {
+      return "";
+    }
+    String name = group.getName();
+    if (name == null || name.isBlank()) {
+      return "";
+    }
+    Locale locale = LocaleContextHolder.getLocale();
+    String key = groupNameKey(name);
+    if (key == null) {
+      return name;
+    }
+    return messageSource.getMessage(key, null, name, locale);
+  }
+
+  private String groupNameKey(String name) {
+    if (name == null) {
+      return null;
+    }
+    String slug = name.trim()
+        .toLowerCase(Locale.ROOT)
+        .replaceAll("[^a-z0-9]+", "_")
+        .replaceAll("^_+|_+$", "");
+    if (!slug.isEmpty()) {
+      return "group.name." + slug;
+    }
+    return "group.name." + name.trim();
   }
 }

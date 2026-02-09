@@ -54,7 +54,7 @@
               <span th:if="${todo.groups == null or #lists.isEmpty(todo.groups)}">-</span>
               <span th:each="g : ${todo.groups}"
                     class="badge text-bg-secondary me-1"
-                    th:text="${g.name}">
+                    th:text="${groupLabels[g.id] != null ? groupLabels[g.id] : g.name}">
                 Group
               </span>
             </dd>

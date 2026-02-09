@@ -72,7 +72,7 @@
                 <span th:each="g : ${groups}"
                       th:if="${todoForm.groupIds != null and todoForm.groupIds.contains(g.id)}"
                       class="badge text-bg-secondary me-1"
-                      th:text="${g.name}">
+                      th:text="${groupLabels[g.id] != null ? groupLabels[g.id] : g.name}">
                   Group
                 </span>
               </dd>

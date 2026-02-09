@@ -62,7 +62,7 @@
               <option th:each="g : ${groups}"
                       th:value="${g.id}"
                       th:selected="${groupId == g.id}"
-                      th:text="${g.name}">
+                      th:text="${groupLabels[g.id] != null ? groupLabels[g.id] : g.name}">
                 Group
               </option>
             </select>
