@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS todo_groups;
 DROP TABLE IF EXISTS todos;
 DROP TABLE IF EXISTS categories;
 
@@ -14,10 +15,17 @@ CREATE TABLE todos (
   description VARCHAR(500),
   due_date DATE,
   priority VARCHAR(10) NOT NULL,
-  completed BOOLEAN NOT NULL,
+  status VARCHAR(20),
+  deleted_at TIMESTAMP,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
   version BIGINT,
   user_id BIGINT NOT NULL,
   category_id BIGINT
+);
+
+CREATE TABLE todo_groups (
+  todo_id BIGINT NOT NULL,
+  group_id BIGINT NOT NULL,
+  PRIMARY KEY (todo_id, group_id)
 );

@@ -25,7 +25,7 @@ class TodoControllerIntegrationTest {
   private MockMvc mockMvc;
 
   @Test
-  @DisplayName("GET /todos: ステータス200とindexビューを返す")
+  @DisplayName("GET /todos: status200とindexビューを返す")
   @WithMockUser(username = "user", roles = "USER")
   void getTodos_returnsIndexView() throws Exception {
     mockMvc.perform(get("/todos"))
@@ -34,7 +34,7 @@ class TodoControllerIntegrationTest {
   }
 
   @Test
-  @DisplayName("POST /todos/confirm: ステータス200と確認ビューを返す")
+  @DisplayName("POST /todos/confirm: status200と確認ビューを返す")
   @WithMockUser(username = "user", roles = "USER")
   void postConfirm_returnsConfirmView() throws Exception {
     mockMvc.perform(post("/todos/confirm")
@@ -43,7 +43,8 @@ class TodoControllerIntegrationTest {
             .param("title", "Integration Test")
             .param("detail", "Confirm flow")
             .param("dueDate", LocalDate.now().plusDays(1).toString())
-            .param("priority", "MEDIUM"))
+            .param("priority", "MEDIUM")
+            .param("status", "IN_PROGRESS"))
         .andExpect(status().isOk())
         .andExpect(view().name("todo/confirm"));
   }

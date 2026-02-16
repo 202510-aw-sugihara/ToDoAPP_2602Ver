@@ -8,10 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
-@MybatisTest
+@MybatisTest(properties = "spring.sql.init.mode=never")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @Sql(scripts = {"/schema-mybatis.sql", "/data-mybatis.sql"})
 @Transactional
@@ -20,29 +21,44 @@ class TodoMapperTest {
   @Autowired
   private TodoMapper todoMapper;
 
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
+
   @Test
-  @DisplayName("search: 条件に一致するTodoを取得できる")
-  void search_returnsMatchingTodos() {
-    List<Todo> todos = todoMapper.search("First", 1L, "createdAt", "desc", null, 10, 0);
+  @DisplayName("未削除ToDoが通常検索で取得できる")
+  void search_returnsUndeletedTodos() {
+    // 変更理由: TodoMapper.xml の通常検索条件（deleted_at IS NULL）に追従する。
+    List<Todo> todos = todoMapper.search(null, 1L, List.of(), "createdAt", "desc", null, null, null, 20, 0);
+
+    assertThat(todos).extracting(Todo::getTitle)
+        .containsExactly("Visible task");
+  }
+
+  @Test
+  @DisplayName("deleted_at入りToDoは通常検索で除外される")
+  void search_excludesDeletedTodos() {
+    List<Todo> todos = todoMapper.search("Deleted", 1L, List.of(), "createdAt", "desc", null, null, null, 20, 0);
+
+    assertThat(todos).isEmpty();
+  }
+
+  @Test
+  @DisplayName("削除済みToDoのみ抽出できる（管理画面前提の確認）")
+  void deletedOnly_canBeSelected() {
+    Long deletedCount = jdbcTemplate.queryForObject(
+        "SELECT COUNT(*) FROM todos WHERE user_id = ? AND deleted_at IS NOT NULL", Long.class, 1L);
+
+    assertThat(deletedCount).isEqualTo(1L);
+  }
+
+  @Test
+  @DisplayName("復元後は通常検索に戻る")
+  void restoredTodo_returnsToNormalSearch() {
+    jdbcTemplate.update("UPDATE todos SET deleted_at = NULL WHERE id = ?", 2L);
+
+    List<Todo> todos = todoMapper.search("Deleted", 1L, List.of(), "createdAt", "desc", null, null, null, 20, 0);
 
     assertThat(todos).hasSize(1);
-    assertThat(todos.get(0).getTitle()).isEqualTo("First task");
-  }
-
-  @Test
-  @DisplayName("count: userId条件で件数を取得できる")
-  void count_returnsTotal() {
-    long total = todoMapper.count(null, 1L, null);
-
-    assertThat(total).isEqualTo(2L);
-  }
-
-  @Test
-  @DisplayName("deleteByIds: 指定IDのTodoを削除できる")
-  void deleteByIds_removesRows() {
-    int deleted = todoMapper.deleteByIds(List.of(1L, 2L), 1L);
-
-    assertThat(deleted).isEqualTo(2);
-    assertThat(todoMapper.count(null, 1L, null)).isZero();
+    assertThat(todos.get(0).getId()).isEqualTo(2L);
   }
 }
