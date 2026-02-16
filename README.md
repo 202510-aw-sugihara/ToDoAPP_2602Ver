@@ -1,201 +1,206 @@
-# ToDo App (Spring Boot)
-[![CI](https://github.com/202510-aw-sugihara/ToDo2602/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/202510-aw-sugihara/ToDo2602/actions/workflows/ci.yml)
+ToDo App (Spring Boot)
 
-## 概要
-このリポジトリは、Spring Boot 3.5 / Thymeleaf を使った ToDo 管理アプリです。  
-基本的な ToDo 管理に加え、認証/認可、グループ境界、添付ファイル、CSV 出力、メール通知、監査ログ、論理削除を実装しています。
+概要
 
-関連クラス/設定:
-- `todo/src/main/java/com/example/todo/TodoApplication.java`
-- `todo/src/main/resources/application.properties`
+本リポジトリは、Spring Boot 3.5 / Thymeleaf を用いた ToDo 管理アプリケーションです。
+基本的なタスク管理機能に加え、認証/認可、グループ境界制御、添付ファイル管理、CSV 出力、メール通知、監査ログ、論理削除を実装しています。
 
-## 対象ユーザー
-- 個人または小規模チームで、期限・状態・カテゴリを使ってタスク管理したい人
-- 管理者としてユーザー/グループ管理、監査ログ確認、削除済み ToDo の復元や完全削除を行いたい人
+実務利用を想定し、権限制御・監査・復元可能な削除設計・CIによる品質担保まで含めた構成としています。
 
-関連クラス:
-- `todo/src/main/java/com/example/todo/TodoController.java`
-- `todo/src/main/java/com/example/todo/AdminUserController.java`
-- `todo/src/main/java/com/example/todo/AdminGroupController.java`
-- `todo/src/main/java/com/example/todo/AdminDeletedTodoController.java`
+対象ユーザー
 
-## 解決する課題
-- ToDo の作成・更新・検索・状態管理を一元化する
-- ユーザー単位 + グループ単位で閲覧境界を制御する
-- 変更履歴を監査ログとして残し、運用時の追跡可能性を確保する
-- 誤削除時に復元可能な論理削除を提供し、管理者が完全削除も実施できる
+個人または小規模チームで、期限・状態・カテゴリを使ってタスク管理したいユーザー
 
-関連クラス:
-- `todo/src/main/java/com/example/todo/TodoService.java`
-- `todo/src/main/java/com/example/todo/AuditAspect.java`
-- `todo/src/main/java/com/example/todo/AuditLogService.java`
+管理者としてユーザー管理、グループ管理、監査ログ確認、削除済み ToDo の復元・完全削除を行いたいユーザー
 
-## 主要機能
-- 認証/認可（ログイン、登録、ロール制御）
-- ToDo CRUD（Web + REST API）
-- カテゴリ管理
-- グループ管理（会社/部署/案件/顧客などの階層）
-- 添付ファイルのアップロード・ダウンロード・プレビュー
-- CSV エクスポート
-- 期限近接 ToDo のメール通知
-- 監査ログの記録/検索
-- 論理削除・復元・完全削除（管理者）
+解決する課題
 
-主要ファイル:
-- `todo/src/main/java/com/example/todo/SecurityConfig.java`
-- `todo/src/main/java/com/example/todo/TodoController.java`
-- `todo/src/main/java/com/example/todo/TodoApiController.java`
-- `todo/src/main/java/com/example/todo/CategoryController.java`
-- `todo/src/main/java/com/example/todo/AdminGroupController.java`
-- `todo/src/main/java/com/example/todo/TodoAttachmentService.java`
-- `todo/src/main/java/com/example/todo/MailService.java`
-- `todo/src/main/java/com/example/todo/TodoReminderScheduler.java`
-- `todo/src/main/java/com/example/todo/AuditLogAdminController.java`
+ToDo の作成・更新・検索・状態管理を一元化
 
-## アーキテクチャ
-- Controller: 画面/API 入出力、バリデーション、遷移
-- Service: 業務ロジック、トランザクション、監査呼び出し
-- JPA Repository: エンティティ永続化
-- MyBatis Mapper: 検索/集計/更新 SQL（一覧検索、件数、監査検索、添付）
-- AOP: 監査・ログ・性能計測
-- Scheduler: 期限近接 ToDo の定期通知
+ユーザー単位 + グループ単位で閲覧境界を制御
 
-主要ファイル:
-- Controller: `todo/src/main/java/com/example/todo/*Controller.java`
-- Service: `todo/src/main/java/com/example/todo/*Service.java`
-- JPA: `todo/src/main/java/com/example/todo/*Repository.java`
-- MyBatis: `todo/src/main/java/com/example/todo/*Mapper.java`, `todo/src/main/resources/mapper/*.xml`
-- AOP: `todo/src/main/java/com/example/todo/AuditAspect.java`, `todo/src/main/java/com/example/todo/LoggingAspect.java`, `todo/src/main/java/com/example/todo/PerformanceAspect.java`
-- Scheduler: `todo/src/main/java/com/example/todo/TodoReminderScheduler.java`
+変更履歴を監査ログとして記録し、追跡可能性を確保
 
-## 権限設計
-- 一般ユーザー (`ROLE_USER`):
-  - 自分の ToDo を操作
-  - 自分が所属するグループに紐づく ToDo を閲覧可能（条件付き）
-- 管理者 (`ROLE_ADMIN`):
-  - `/admin/**` を利用可能
-  - ユーザー管理、グループ管理、監査ログ閲覧、削除済み ToDo の復元/完全削除
+誤削除時に復元可能な論理削除設計
 
-設計の要点:
-- 画面/API の入口制御: `SecurityConfig.java`
-- 管理画面の追加制約: `@PreAuthorize`（`AdminUserController.java`, `AdminGroupController.java`, `AdminDeletedTodoController.java`, `AuditLogAdminController.java`）
-- グループ境界を使った閲覧判定: `TodoService.java` / `TodoController.java`
-- 論理削除は通常操作、復元/完全削除は管理責務: `TodoService.java`, `AdminDeletedTodoController.java`
+管理者による完全削除機能
 
-## 監査ログ方針
-- `@Auditable` の付いた処理を `AuditAspect` で横断記録
-- 主要な記録項目:
-  - action（操作種別）
-  - username（実行ユーザー）
-  - targetType / targetId（対象）
-  - beforeValue / afterValue（前後値）
-  - createdAt（記録時刻）
-- 手動記録も併用（例: バルク削除、作成/更新/削除）
+主要機能
 
-関連ファイル:
-- `todo/src/main/java/com/example/todo/Auditable.java`
-- `todo/src/main/java/com/example/todo/AuditAspect.java`
-- `todo/src/main/java/com/example/todo/AuditLogService.java`
-- `todo/src/main/java/com/example/todo/AuditLogMapper.java`
-- `todo/src/main/resources/mapper/AuditLogMapper.xml`
-- `todo/src/main/resources/schema.sql`
+認証/認可（Spring Security）
 
-## ローカル起動
-### 前提
-- Java 17
-- Maven Wrapper（`mvnw` / `mvnw.cmd`）
+ToDo CRUD（Web + REST API）
 
-### 起動手順（PowerShell）
-```powershell
+カテゴリ管理
+
+グループ管理（部署・案件などの論理境界）
+
+添付ファイルのアップロード/ダウンロード/プレビュー
+
+CSV エクスポート
+
+期限近接 ToDo のメール通知（Scheduler）
+
+監査ログの記録/検索（AOP）
+
+論理削除・復元・完全削除（管理者）
+
+アーキテクチャ
+レイヤ構成
+
+Controller: 入出力制御、バリデーション、画面/API制御
+
+Service: 業務ロジック、トランザクション管理
+
+JPA Repository: エンティティ永続化
+
+MyBatis Mapper: 検索系SQL、集計、監査ログ取得
+
+AOP: 監査ログ・ログ出力・性能計測
+
+Scheduler: 期限近接通知
+
+主な実装クラス
+
+SecurityConfig.java
+
+TodoController.java
+
+TodoService.java
+
+AuditAspect.java
+
+TodoReminderScheduler.java
+
+FileStorageService.java
+
+MailService.java
+
+権限設計
+一般ユーザー (ROLE_USER)
+
+自分の ToDo を操作可能
+
+所属グループに紐づく ToDo を閲覧可能（条件付き）
+
+管理者 (ROLE_ADMIN)
+
+/admin/** へアクセス可能
+
+ユーザー管理
+
+グループ管理
+
+監査ログ閲覧
+
+削除済み ToDo の復元 / 完全削除
+
+制御方法:
+
+URL制御: SecurityConfig
+
+メソッド制御: @PreAuthorize
+
+グループ境界判定: TodoService
+
+監査ログ方針
+
+@Auditable アノテーションを付与した処理を AuditAspect で横断記録。
+
+記録項目:
+
+action（操作種別）
+
+username（実行ユーザー）
+
+targetType / targetId
+
+beforeValue / afterValue
+
+createdAt
+
+運用時の追跡性を担保する設計としています。
+
+ローカル起動
+前提
+
+Java 17
+
+Maven Wrapper（mvnw）
+
+起動方法（PowerShell）
 cd todo
 .\mvnw.cmd spring-boot:run
-```
+
 
 起動後:
-- アプリ: `http://localhost:8080`
-- H2 Console: `http://localhost:8080/h2-console`
 
-### 8080 ポート競合時の対処
-`Port 8080 was already in use` が出る場合があります。
+http://localhost:8080
 
-1) 利用中プロセスの特定（Windows）
-```powershell
+H2 Console: http://localhost:8080/h2-console
+
+ポート競合時
 Get-NetTCPConnection -LocalPort 8080 -State Listen
-```
-`OwningProcess` の PID を確認し、必要に応じて停止してください。
 
-2) 代替ポートを使う方法
-- `application.properties` を変更
-  - `todo/src/main/resources/application.properties` に `server.port=18080` を追加
-- 環境変数で上書き
-```powershell
+
+代替ポート指定:
+
 $env:SERVER_PORT=18080
-cd todo
 .\mvnw.cmd spring-boot:run
-```
-- 起動引数で上書き
-```powershell
-cd todo
-.\mvnw.cmd "-Dspring-boot.run.arguments=--server.port=18080" spring-boot:run
-```
 
-## 設定
-主要設定ファイル:
-- `todo/src/main/resources/application.properties`
+設定
 
-ポイント:
-- DB（H2, In-Memory）
-  - `spring.datasource.url=jdbc:h2:mem:tododb...`
-- メール
-  - `spring.mail.*`
-  - `app.mail.from`
-  - 環境変数: `GMAIL_USERNAME`, `GMAIL_PASSWORD`, `GMAIL_FROM`
-- 添付ファイル
-  - `app.upload.dir=uploads`
-  - **保存先は実行ディレクトリ基準**です。
-  - `cd todo` で起動した場合、実体は `todo/uploads` になります。
-- アップロード上限
-  - `spring.servlet.multipart.max-file-size=10MB`
-  - `spring.servlet.multipart.max-request-size=10MB`
+主な設定ファイル:
 
-関連クラス:
-- `todo/src/main/java/com/example/todo/FileStorageService.java`
-- `todo/src/main/java/com/example/todo/MailService.java`
+todo/src/main/resources/application.properties
 
-## テスト（現況・前提・整備方針）
-実行手順:
-```powershell
+添付ファイル
+app.upload.dir=uploads
+
+
+保存先は実行ディレクトリ基準。
+cd todo で起動した場合、実体は todo/uploads。
+
+メール通知
+
+環境変数:
+
+GMAIL_USERNAME
+
+GMAIL_PASSWORD
+
+GMAIL_FROM
+
+テスト・品質保証
+ローカルテスト実行
 cd todo
 .\mvnw.cmd test
-```
 
-現況（2026-02-16 時点）:
-- 現状のままだと一部テストは失敗します。
-- 主な既知課題:
-  - `todo/src/test/java/com/example/todo/TodoServiceMapperMockTest.java`
-    - `TodoService` / `TodoMapper` の現行シグネチャとの不整合
-  - `todo/src/test/java/com/example/todo/TodoMapperTest.java`
-    - Mapper メソッド呼び出しシグネチャが古い前提
-  - `todo/src/test/resources/schema-mybatis.sql`
-    - `completed` 前提のスキーマで、本体 `Todo` の `status` ベース設計と不整合
+CI
 
-今後の整備方針:
-- テストコードを現行の `status` / `deletedAt` / Mapper 引数に合わせて更新
-- `schema-mybatis.sql` / `data-mybatis.sql` を本体スキーマへ追従
-- Web/Service/Mapper の回帰を段階的に再構築
+GitHub Actions による自動ビルド・テスト
 
-## 文字コード運用ルール（UTF-8 統一）
-文字化け回避のため、以下を UTF-8 で統一します。
-- `todo/src/main/resources/data.sql`
-- `todo/src/main/resources/messages_ja_JP.properties`
-- `README.md`
+Ubuntu (Linux) 環境で実行
 
-運用ルール:
-- IDE のファイルエンコーディングを UTF-8 に固定
-- Git へ保存する前に、対象ファイルが UTF-8 であることを確認
-- SQL/プロパティ/README の日本語編集時は、エディタの自動変換設定に注意
-- 必要に応じて Maven 実行時に UTF-8 を明示（例: `JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8`）
+push / pull_request 時に自動実行
 
-## デモ
-スクリーンショット置き場（画像は未追加）:
-- `docs/README_assets/`
+現在すべて成功
+
+文字コード対策
+
+UTF-8（BOMなし）で統一
+
+.editorconfig による強制
+
+Linux環境でのコンパイル成功を確認済み
+
+デモ
+
+スクリーンショット格納場所:
+
+docs/README_assets/
+
+補足
+
+本プロジェクトは単なるCRUDアプリではなく、
+実務利用を想定した設計（権限・監査・削除設計・CI）まで含めた構成としています。
