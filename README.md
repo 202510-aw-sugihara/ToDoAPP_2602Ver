@@ -204,3 +204,37 @@ docs/README_assets/
 
 本プロジェクトは単なるCRUDアプリではなく、
 実務利用を想定した設計（権限・監査・削除設計・CI）まで含めた構成としています。
+## Docker起動（PostgreSQL）
+
+既存のローカル起動（H2）はそのまま使えます。Dockerでは `docker` profile で PostgreSQL 接続に切り替えます。
+
+関連ファイル:
+- `docker-compose.yml`
+- `todo/Dockerfile`
+- `todo/src/main/resources/application-docker.properties`
+- `.env.example`
+
+### 1) 環境変数ファイルの用意
+```bash
+cp .env.example .env
+```
+
+### 2) 起動
+```bash
+docker compose up --build
+```
+
+起動後:
+- アプリ: `http://localhost:8080`（または `.env` の `APP_PORT`）
+- DB: PostgreSQL (`db` service)
+- Spring Profile: `docker`（`SPRING_PROFILES_ACTIVE=docker`）
+
+### 3) ログイン確認（初期ユーザー）
+- 一般ユーザー: `user` / `password`
+- 管理者: `admin` / `adminpass`
+
+`application-docker.properties` では SQL ベース初期化を継続し、`data-docker.sql` で初期データを投入します。
+
+### ポート競合時
+- アプリ 8080 が競合する場合: `.env` の `APP_PORT` を `18080` などへ変更
+- PostgreSQL 5432 が競合する場合: `.env` の `POSTGRES_PORT` を変更
