@@ -47,6 +47,11 @@ jobs:
       - name: Build and start services
         run: docker compose up -d --build
 
+      - name: Verify db tables (diagnostic)
+        run: |
+          docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt" || true
+          docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select count(*) from audit_logs;" || true
+
       - name: Check docker compose status
         run: docker compose ps
 

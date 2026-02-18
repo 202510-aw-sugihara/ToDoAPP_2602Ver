@@ -233,7 +233,7 @@ docker compose up --build
 - 一般ユーザー: `user` / `password`
 - 管理者: `admin` / `adminpass`
 
-`application-docker.properties` ではスキーマ変更を行わず検証のみ実施し、初期化は `schema-docker.sql` / `data-docker.sql` をPostgreSQLコンテナ側で適用します。
+`application-docker.properties` ではスキーマ変更を行わず検証のみ実施し、初期化は `docker/initdb/*.sql` をPostgreSQLコンテナ側で適用します。
 
 ### ポート競合時
 - アプリ 8080 が競合する場合: `.env` の `APP_PORT` を `18080` などへ変更
@@ -243,7 +243,7 @@ docker compose up --build
 
 ### 初期化責務の分離
 - Docker（`SPRING_PROFILES_ACTIVE=docker`）では、**DB初期化はPostgreSQLコンテナ側**で実施します。
-- `docker-compose.yml` で `schema-docker.sql` / `data-docker.sql` を `/docker-entrypoint-initdb.d/` にマウントし、DB作成時に一度だけ適用します。
+- `docker-compose.yml` で `./docker/initdb` を `/docker-entrypoint-initdb.d/` にマウントし、`*.sql` をDB作成時に一度だけ適用します。
 - アプリ側（`application-docker.properties`）は `spring.jpa.hibernate.ddl-auto=validate` と `spring.sql.init.mode=never` を使用し、**二重初期化を防止**します。
 
 ### なぜ H2 と PostgreSQL を分離するか
@@ -288,6 +288,7 @@ Docker/CIの疎通確認用に Spring Boot Actuator を有効化しています�
 - Docker Compose adds an `app` healthcheck that waits for `/actuator/health` to return `{"status":"UP"}`.
 - GitHub Actions `docker-smoke` waits for `docker inspect` health status (`healthy`) instead of host-side curl polling.
 - Verify with `docker compose ps` and confirm `todo-app` shows `(healthy)`.
+- If you change `schema-docker.sql`, recreate DB volume (`docker compose down -v` then `docker compose up --build`) so init scripts run again.
 
 ## OpenAPI (Swagger UI)
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
