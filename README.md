@@ -233,8 +233,65 @@ docker compose up --build
 - 一般ユーザー: `user` / `password`
 - 管理者: `admin` / `adminpass`
 
-`application-docker.properties` では SQL ベース初期化を継続し、`data-docker.sql` で初期データを投入します。
+`application-docker.properties` ではスキーマ変更を行わず検証のみ実施し、初期化は `schema-docker.sql` / `data-docker.sql` をPostgreSQLコンテナ側で適用します。
 
 ### ポート競合時
 - アプリ 8080 が競合する場合: `.env` の `APP_PORT` を `18080` などへ変更
 - PostgreSQL 5432 が競合する場合: `.env` の `POSTGRES_PORT` を変更
+
+## Docker設計方針（運用ガード）
+
+### 初期化責務の分離
+- Docker（`SPRING_PROFILES_ACTIVE=docker`）では、**DB初期化はPostgreSQLコンテナ側**で実施します。
+- `docker-compose.yml` で `schema-docker.sql` / `data-docker.sql` を `/docker-entrypoint-initdb.d/` にマウントし、DB作成時に一度だけ適用します。
+- アプリ側（`application-docker.properties`）は `spring.jpa.hibernate.ddl-auto=validate` と `spring.sql.init.mode=never` を使用し、**二重初期化を防止**します。
+
+### なぜ H2 と PostgreSQL を分離するか
+- ローカル開発（`application.properties`）は H2 を使い、素早い起動・試行を優先します。
+- Docker 実行（`application-docker.properties`）は PostgreSQL を使い、本番に近い検証を優先します。
+- これにより、日常開発の速度と実運用前検証の現実性を両立します。
+
+### なぜ `data-docker.sql` を分離するか
+- 既存の `data.sql` は H2 方言を含むため、PostgreSQL ではそのまま互換になりません。
+- Docker 用に `data-docker.sql` を分離し、`admin` / `user` を含む最小初期データをPostgreSQLで確実に投入します。
+
+### .env 運用
+- Compose は `.env` を前提に動作します（資格情報やポートを直書きしない）。
+- 初回は以下を実行してください。
+```bash
+cp .env.example .env
+```
+- 代表キー: `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `APP_PORT`, `SPRING_PROFILES_ACTIVE`
+
+### 再起動耐性
+- `db` / `app` の両サービスに `restart: unless-stopped` を設定しています。
+- DBは `healthcheck` を通過後にアプリが起動するため、起動順序の不整合を抑制します。
+
+## Actuatorヘルスチェック
+
+Docker/CIの疎通確認用に Spring Boot Actuator を有効化しています。
+
+- 疎通確認URL: `http://localhost:8080/actuator/health`
+- 公開エンドポイント: `health` のみ
+- セキュリティ: `/actuator/health` は `permitAll`（その他は既存の認証/認可を維持）
+
+関連ファイル:
+- `todo/pom.xml`
+- `todo/src/main/resources/application.properties`
+- `todo/src/main/resources/application-docker.properties`
+- `todo/src/main/java/com/example/todo/SecurityConfig.java`
+
+### Actuator Note
+- `/actuator/health` is the connectivity check endpoint for local, Docker, and CI.
+- `management.health.mail.enabled=false` is set to avoid false negatives in environments without SMTP credentials.
+- Docker Compose adds an `app` healthcheck that waits for `/actuator/health` to return `{"status":"UP"}`.
+- Verify with `docker compose ps` and confirm `todo-app` shows `(healthy)`.
+
+## OpenAPI (Swagger UI)
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+### Access conditions
+- Swagger endpoints (`/swagger-ui/**`, `/v3/api-docs/**`) are public.
+- Actual Todo REST API endpoints require authentication (`user/password` or `admin/adminpass` in local seed data).
+- You can sign in via `http://localhost:8080/login` before testing APIs in browser.

@@ -2,40 +2,54 @@ services:
   db:
     image: postgres:16-alpine
     container_name: todo-db
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-todo}
-      POSTGRES_USER: ${POSTGRES_USER:-todo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-todo}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./todo/src/main/resources/schema-docker.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./todo/src/main/resources/data-docker.sql:/docker-entrypoint-initdb.d/02_data.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-todo} -d ${POSTGRES_DB:-todo}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 10s
 
   app:
     build:
       context: ./todo
       dockerfile: Dockerfile
     container_name: todo-app
+    restart: unless-stopped
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: ${POSTGRES_DB:-todo}
-      DB_USER: ${POSTGRES_USER:-todo}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-todo}
-      GMAIL_USERNAME: ${GMAIL_USERNAME:-}
-      GMAIL_PASSWORD: ${GMAIL_PASSWORD:-}
-      GMAIL_FROM: ${GMAIL_FROM:-}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      GMAIL_USERNAME: ${GMAIL_USERNAME}
+      GMAIL_PASSWORD: ${GMAIL_PASSWORD}
+      GMAIL_FROM: ${GMAIL_FROM}
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "${APP_PORT}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
 
 volumes:
   postgres_data:

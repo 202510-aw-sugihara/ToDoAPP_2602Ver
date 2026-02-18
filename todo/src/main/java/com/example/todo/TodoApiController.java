@@ -1,5 +1,7 @@
 package com.example.todo;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/todos")
+@Tag(name = "Todo API", description = "ToDo items CRUD endpoints")
 public class TodoApiController {
 
   private final TodoService todoService;
@@ -28,6 +31,7 @@ public class TodoApiController {
   }
 
   @GetMapping
+  @Operation(summary = "List todos", description = "Returns todos owned by the authenticated user")
   public ResponseEntity<ApiResponse<List<Todo>>> list(@AuthenticationPrincipal UserDetails userDetails) {
     long userId = requireUserId(userDetails);
     List<Todo> todos = todoService.findAll(userId);
@@ -35,6 +39,7 @@ public class TodoApiController {
   }
 
   @GetMapping("/{id}")
+  @Operation(summary = "Get todo by id", description = "Returns a single todo if it belongs to the authenticated user")
   public ResponseEntity<ApiResponse<Todo>> find(@PathVariable("id") long id,
       @AuthenticationPrincipal UserDetails userDetails) {
     Todo todo = todoService.findById(id).orElse(null);
@@ -50,6 +55,7 @@ public class TodoApiController {
   }
 
   @PostMapping
+  @Operation(summary = "Create todo", description = "Creates a new todo for the authenticated user")
   public ResponseEntity<ApiResponse<Todo>> create(@Valid @RequestBody TodoForm form,
       @AuthenticationPrincipal UserDetails userDetails) {
     long userId = requireUserId(userDetails);
@@ -59,6 +65,7 @@ public class TodoApiController {
   }
 
   @PutMapping("/{id}")
+  @Operation(summary = "Update todo", description = "Updates a todo if it belongs to the authenticated user")
   public ResponseEntity<ApiResponse<Todo>> update(@PathVariable("id") long id,
       @Valid @RequestBody TodoForm form,
       @AuthenticationPrincipal UserDetails userDetails) {
@@ -76,6 +83,7 @@ public class TodoApiController {
   }
 
   @DeleteMapping("/{id}")
+  @Operation(summary = "Delete todo", description = "Deletes a todo if it belongs to the authenticated user")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable("id") long id,
       @AuthenticationPrincipal UserDetails userDetails) {
     Todo existing = todoService.findById(id).orElse(null);
