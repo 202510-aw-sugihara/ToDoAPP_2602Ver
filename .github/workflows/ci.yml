@@ -47,21 +47,48 @@ jobs:
       - name: Build and start services
         run: docker compose up -d --build
 
-      - name: Wait for app health
+      - name: Check docker compose status
+        run: docker compose ps
+
+      - name: Show db logs (tail)
+        run: docker compose logs --no-color db --tail=200
+
+      - name: Show app logs (tail)
+        run: docker compose logs --no-color app --tail=200
+
+      - name: Wait for app health via docker inspect
         run: |
-          for i in {1..30}; do
-            if curl -fsS http://localhost:8080/actuator/health > /dev/null; then
+          APP_CONTAINER_ID=$(docker compose ps -q app)
+          if [ -z "$APP_CONTAINER_ID" ]; then
+            echo "App container was not found."
+            docker compose ps
+            docker compose logs --no-color db --tail=200
+            docker compose logs --no-color app --tail=200
+            exit 1
+          fi
+
+          for i in {1..60}; do
+            STATUS=$(docker inspect --format '{{.State.Health.Status}}' "$APP_CONTAINER_ID" 2>/dev/null || echo "unknown")
+            echo "App health status: $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
               echo "Health check passed"
               exit 0
             fi
             sleep 2
           done
-          echo "Health check failed after 60 seconds"
+
+          echo "App did not become healthy within timeout"
+          docker compose ps
+          docker compose logs --no-color db --tail=200
+          docker compose logs --no-color app --tail=200
           exit 1
 
-      - name: Show docker compose logs on failure
+      - name: Show docker compose diagnostics on failure
         if: failure()
-        run: docker compose logs --no-color
+        run: |
+          docker compose ps
+          docker compose logs --no-color db --tail=200
+          docker compose logs --no-color app --tail=200
 
       - name: Tear down services
         if: always()

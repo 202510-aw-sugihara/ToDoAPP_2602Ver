@@ -283,8 +283,10 @@ Docker/CIの疎通確認用に Spring Boot Actuator を有効化しています�
 
 ### Actuator Note
 - `/actuator/health` is the connectivity check endpoint for local, Docker, and CI.
+- Docker profile check: `curl -i http://localhost:8080/actuator/health` should return `HTTP/1.1 200`.
 - `management.health.mail.enabled=false` is set to avoid false negatives in environments without SMTP credentials.
 - Docker Compose adds an `app` healthcheck that waits for `/actuator/health` to return `{"status":"UP"}`.
+- GitHub Actions `docker-smoke` waits for `docker inspect` health status (`healthy`) instead of host-side curl polling.
 - Verify with `docker compose ps` and confirm `todo-app` shows `(healthy)`.
 
 ## OpenAPI (Swagger UI)
