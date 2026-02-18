@@ -21,12 +21,9 @@ CREATE TABLE IF NOT EXISTS groups (
   name VARCHAR(100) NOT NULL,
   type VARCHAR(20) NOT NULL,
   parent_id BIGINT NULL,
-  color VARCHAR(20) NOT NULL
+  color VARCHAR(20) NOT NULL,
+  CONSTRAINT fk_groups_parent FOREIGN KEY (parent_id) REFERENCES groups(id)
 );
-
-ALTER TABLE groups
-  ADD CONSTRAINT IF NOT EXISTS fk_groups_parent
-  FOREIGN KEY (parent_id) REFERENCES groups(id);
 
 CREATE TABLE IF NOT EXISTS todos (
   id BIGSERIAL PRIMARY KEY,
@@ -41,44 +38,26 @@ CREATE TABLE IF NOT EXISTS todos (
   deleted_at TIMESTAMP,
   version BIGINT,
   created_at TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP NOT NULL
+  updated_at TIMESTAMP NOT NULL,
+  CONSTRAINT fk_todos_category FOREIGN KEY (category_id) REFERENCES categories(id),
+  CONSTRAINT fk_todos_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
-ALTER TABLE todos
-  ADD CONSTRAINT IF NOT EXISTS fk_todos_category
-  FOREIGN KEY (category_id) REFERENCES categories(id);
-
-ALTER TABLE todos
-  ADD CONSTRAINT IF NOT EXISTS fk_todos_user
-  FOREIGN KEY (user_id) REFERENCES users(id);
 
 CREATE TABLE IF NOT EXISTS todo_groups (
   todo_id BIGINT NOT NULL,
   group_id BIGINT NOT NULL,
-  PRIMARY KEY (todo_id, group_id)
+  PRIMARY KEY (todo_id, group_id),
+  CONSTRAINT fk_todo_groups_todo FOREIGN KEY (todo_id) REFERENCES todos(id),
+  CONSTRAINT fk_todo_groups_group FOREIGN KEY (group_id) REFERENCES groups(id)
 );
-
-ALTER TABLE todo_groups
-  ADD CONSTRAINT IF NOT EXISTS fk_todo_groups_todo
-  FOREIGN KEY (todo_id) REFERENCES todos(id);
-
-ALTER TABLE todo_groups
-  ADD CONSTRAINT IF NOT EXISTS fk_todo_groups_group
-  FOREIGN KEY (group_id) REFERENCES groups(id);
 
 CREATE TABLE IF NOT EXISTS user_groups (
   user_id BIGINT NOT NULL,
   group_id BIGINT NOT NULL,
-  PRIMARY KEY (user_id, group_id)
+  PRIMARY KEY (user_id, group_id),
+  CONSTRAINT fk_user_groups_user FOREIGN KEY (user_id) REFERENCES users(id),
+  CONSTRAINT fk_user_groups_group FOREIGN KEY (group_id) REFERENCES groups(id)
 );
-
-ALTER TABLE user_groups
-  ADD CONSTRAINT IF NOT EXISTS fk_user_groups_user
-  FOREIGN KEY (user_id) REFERENCES users(id);
-
-ALTER TABLE user_groups
-  ADD CONSTRAINT IF NOT EXISTS fk_user_groups_group
-  FOREIGN KEY (group_id) REFERENCES groups(id);
 
 CREATE TABLE IF NOT EXISTS audit_logs (
   id BIGSERIAL PRIMARY KEY,
@@ -102,9 +81,6 @@ CREATE TABLE IF NOT EXISTS todo_attachments (
   stored_filename VARCHAR(255) NOT NULL,
   content_type VARCHAR(100),
   size BIGINT NOT NULL,
-  uploaded_at TIMESTAMP NOT NULL
+  uploaded_at TIMESTAMP NOT NULL,
+  CONSTRAINT fk_todo_attachments_todo FOREIGN KEY (todo_id) REFERENCES todos(id)
 );
-
-ALTER TABLE todo_attachments
-  ADD CONSTRAINT IF NOT EXISTS fk_todo_attachments_todo
-  FOREIGN KEY (todo_id) REFERENCES todos(id);
