@@ -298,3 +298,39 @@ Docker/CIの疎通確認用に Spring Boot Actuator を有効化しています�
 - Swagger endpoints (`/swagger-ui/**`, `/v3/api-docs/**`) are public.
 - Actual Todo REST API endpoints require authentication (`user/password` or `admin/adminpass` in local seed data).
 - You can sign in via `http://localhost:8080/login` before testing APIs in browser.
+
+## Docker/PostgreSQL initdb運用ルール（再発防止）
+
+### 正本（single source of truth）
+- Docker/PostgreSQL 初期化SQLの正本は `docker/initdb/` 配下です。
+- 実行順は `01_schema.sql` -> `02_data.sql` の番号順です。
+- `todo/src/main/resources/schema-docker.sql` / `data-docker.sql` は「コピー元の履歴」として残し、運用は `docker/initdb` に一本化します。
+
+### なぜ `docker/initdb` を正本にするか
+- PostgreSQL公式イメージが `docker-entrypoint-initdb.d` を直接実行するため、実際に使われる配置と一致する。
+- `spring.sql.init.mode=never` と矛盾せず、アプリ側初期化と競合しない。
+- CIで「マウント確認」と「テーブル実在確認」を直接行えるため、診断が速い。
+
+### 変更時の必須手順
+初期化SQLを変更したら、既存volumeを削除して再作成してください。
+
+```bash
+docker compose down -v
+docker compose up -d --build
+```
+
+### 診断コマンド（ローカル/CI共通）
+
+```bash
+docker compose ps
+docker compose logs --no-color db --tail=200
+docker compose exec -T db ls -la /docker-entrypoint-initdb.d
+docker compose exec -T db sh -lc "psql -U '$POSTGRES_USER' -d '$POSTGRES_DB' -c '\\dt'"
+docker compose exec -T db sh -lc "psql -U '$POSTGRES_USER' -d '$POSTGRES_DB' -tAc \"select to_regclass('public.audit_logs');\""
+```
+
+`public.audit_logs` が返らない場合、initdb未実行またはSQL不整合として即調査してください。
+
+### SQLファイルの文字コード注意
+- `docker/initdb/*.sql` は UTF-8 / LF を推奨（BOMなし）。
+- 改行コードや文字コードが崩れると、CI/Linux環境で実行失敗や文字化けの原因になります。

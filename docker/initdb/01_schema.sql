@@ -1,3 +1,6 @@
+-- 01_schema.sql
+-- Canonical Docker/PostgreSQL schema initialization script.
+
 CREATE TABLE IF NOT EXISTS categories (
   id BIGSERIAL PRIMARY KEY,
   name VARCHAR(50) NOT NULL,

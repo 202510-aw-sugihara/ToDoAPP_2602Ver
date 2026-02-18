@@ -1,3 +1,6 @@
+-- 02_data.sql
+-- Canonical Docker/PostgreSQL seed data script.
+
 INSERT INTO categories (name, color)
 SELECT 'Work', '#0d6efd'
 WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = 'Work');
