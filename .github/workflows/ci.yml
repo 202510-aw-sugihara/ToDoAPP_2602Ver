@@ -44,16 +44,33 @@ jobs:
       - name: Prepare .env for docker compose
         run: cp .env.example .env
 
+      - name: Load .env into runner env
+        run: |
+          set -a
+          source .env
+          set +a
+          {
+            echo "POSTGRES_USER=$POSTGRES_USER"
+            echo "POSTGRES_DB=$POSTGRES_DB"
+          } >> "$GITHUB_ENV"
+          echo "POSTGRES_USER=$POSTGRES_USER"
+          echo "POSTGRES_DB=$POSTGRES_DB"
+
       - name: Build and start services
         run: |
           docker compose up -d --build
           docker compose ps
 
+      - name: Inspect initdb mount
+        run: |
+          docker compose exec -T db sh -lc 'ls -la /docker-entrypoint-initdb.d || true'
+          docker compose exec -T db sh -lc 'echo "=== initdb files ==="; for f in /docker-entrypoint-initdb.d/*; do echo "--- $f"; sed -n "1,40p" "$f"; done || true'
+
       # 失敗時に原因が取れるよう、まずDBの起動状態を確認
       - name: Wait for db to become ready
         run: |
           for i in {1..60}; do
-            if docker compose exec -T db sh -lc 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'; then
+            if docker compose exec -T db sh -lc "pg_isready -U '$POSTGRES_USER' -d '$POSTGRES_DB'"; then
               echo "DB is ready"
               exit 0
             fi
@@ -67,8 +84,8 @@ jobs:
 
       - name: Verify db tables (diagnostic)
         run: |
-          docker compose exec -T db sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"' || true
-          docker compose exec -T db sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select count(*) from audit_logs;"' || true
+          docker compose exec -T db sh -lc "psql -U '$POSTGRES_USER' -d '$POSTGRES_DB' -c '\dt'" || true
+          docker compose exec -T db sh -lc "psql -U '$POSTGRES_USER' -d '$POSTGRES_DB' -c 'select count(*) from audit_logs;'" || true
 
       # app は HEALTHCHECK 前提にせず、HTTPで待つ
       - name: Wait for app HTTP
@@ -91,8 +108,8 @@ jobs:
         run: |
           docker compose ps
           docker compose logs --no-color db --tail=300
-          docker compose logs --no-color app --tail=300
           docker inspect todo-db --format '{{json .State.Health}}' || true
+          docker compose logs --no-color app --tail=300
 
       - name: Tear down services
         if: always()
