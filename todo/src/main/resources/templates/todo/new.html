@@ -45,14 +45,18 @@
                 enctype="multipart/form-data" class="vstack gap-3" data-disable-on-submit="true">
             <div>
               <label class="form-label" th:text="#{label.author}">Author</label>
-              <input class="form-control" type="text" th:field="*{author}" readonly />
+              <span class="required-badge">※必須</span>
+              <input class="form-control" type="text" th:field="*{author}" readonly data-required="true"
+                     th:classappend="${#fields.hasErrors('author')} ? ' required-empty' : ''" />
               <div class="text-danger small" th:if="${#fields.hasErrors('author')}" th:errors="*{author}">
                 Error
               </div>
             </div>
             <div>
               <label class="form-label" th:text="#{label.title}">Title</label>
-              <input class="form-control" type="text" th:field="*{title}" />
+              <span class="required-badge">※必須</span>
+              <input class="form-control" type="text" th:field="*{title}" data-required="true"
+                     th:classappend="${#fields.hasErrors('title')} ? ' required-empty' : ''" />
               <div class="text-danger small" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">
                 Error
               </div>
@@ -66,14 +70,18 @@
             </div>
             <div>
               <label class="form-label" th:text="#{label.due_date}">Due</label>
-              <input class="form-control" type="date" th:field="*{dueDate}" />
+              <span class="required-badge">※必須</span>
+              <input class="form-control" type="date" th:field="*{dueDate}" data-required="true"
+                     th:classappend="${#fields.hasErrors('dueDate')} ? ' required-empty' : ''" />
               <div class="text-danger small" th:if="${#fields.hasErrors('dueDate')}" th:errors="*{dueDate}">
                 Error
               </div>
             </div>
             <div>
               <label class="form-label" th:text="#{label.priority}">Priority</label>
-              <select class="form-select" th:field="*{priority}">
+              <span class="required-badge">※必須</span>
+              <select class="form-select" th:field="*{priority}" data-required="true"
+                      th:classappend="${#fields.hasErrors('priority')} ? ' required-empty' : ''">
                 <option value="" disabled>--</option>
                 <option th:each="p : ${T(com.example.todo.Priority).values()}"
                         th:value="${p}"
@@ -87,7 +95,9 @@
             </div>
             <div>
               <label class="form-label" th:text="#{label.status}">Status</label>
-              <select class="form-select" th:field="*{status}">
+              <span class="required-badge">※必須</span>
+              <select class="form-select" th:field="*{status}" data-required="true"
+                      th:classappend="${#fields.hasErrors('status')} ? ' required-empty' : ''">
                 <option value="" th:text="#{label.select_status}" th:selected="*{status} == null">選択してください</option>
                 <option th:each="s : ${T(com.example.todo.TodoStatus).values()}"
                         th:value="${s}"
@@ -197,7 +207,21 @@
       (() => {
         const form = document.querySelector("form[data-disable-on-submit='true']");
         if (!form) return;
+        const requiredFields = form.querySelectorAll("[data-required='true']");
+        const isEmpty = (el) => {
+          if (el.tagName === "SELECT") return !el.value;
+          return !el.value || !el.value.trim();
+        };
+        const refresh = (el) => {
+          el.classList.toggle("required-empty", isEmpty(el));
+        };
+        requiredFields.forEach((el) => {
+          el.addEventListener("input", () => refresh(el));
+          el.addEventListener("change", () => refresh(el));
+          refresh(el);
+        });
         form.addEventListener("submit", () => {
+          requiredFields.forEach((el) => refresh(el));
           const buttons = form.querySelectorAll("button[type='submit']");
           buttons.forEach((btn) => {
             btn.disabled = true;
@@ -332,6 +356,16 @@
         height: 10px;
         border-radius: 50%;
         display: inline-block;
+      }
+      .required-badge {
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-left: 0.4rem;
+        font-weight: 600;
+      }
+      .form-control.required-empty,
+      .form-select.required-empty {
+        background-color: #fff9db;
       }
     </style>
   <script
