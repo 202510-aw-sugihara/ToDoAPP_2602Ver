@@ -83,8 +83,8 @@ jobs:
           docker compose exec -T db sh -lc "psql -U '$POSTGRES_USER' -d '$POSTGRES_DB' -v ON_ERROR_STOP=1 -c '\dt'"
           for t in audit_logs todos todo_groups user_groups todo_attachments; do
             docker compose exec -T db sh -lc "
-              psql -U '$POSTGRES_USER' -d '$POSTGRES_DB' -tAc \"select to_regclass('public.${t}')::text;\" \
-              | tr -d '\r' | grep -x \"public.${t}\"
+              psql -U '$POSTGRES_USER' -d '$POSTGRES_DB' -tAc \"select to_regclass('public.${t}') is not null;\" \
+              | tr -d '\r' | grep -x \"t\"
             "
           done
 
