@@ -228,6 +228,8 @@ docker compose up --build
 - アプリ: `http://localhost:8080`（または `.env` の `APP_PORT`）
 - DB: PostgreSQL (`db` service)
 - Spring Profile: `docker`（`SPRING_PROFILES_ACTIVE=docker`）
+公開URL
+https://todoapp-2602ver.onrender.com
 
 ### 3) ログイン確認（初期ユーザー）
 - 一般ユーザー: `user` / `password`
